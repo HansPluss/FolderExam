@@ -36,64 +36,7 @@ void InputSystem::processInput(Entity& entity, GLFWwindow* window)
         if (player) {
             // Opens inventory when tab is pressed
 
-            if (input->bTab && !bUsingItem) {
-                player->GetInventory();  // Calling the GetInventory() function
-                bUsingItem = true;
-            }
-            else if ((input->bKey1 && !bUsingItem) || (inventoryItem == 0 && !bUsingItem && input->bKeyQ))
-            {
-                player->UseInventoryItem(0);
-                bUsingItem = true;
-
-            }
-            else if ((input->bKey2 && !bUsingItem) || (inventoryItem == 1 && input->bKeyQ && !bUsingItem))
-            {
-                player->UseInventoryItem(1);
-                bUsingItem = true;
-            }
-            else if ((input->bKey3 && !bUsingItem) || (inventoryItem == 2 && input->bKeyQ && !bUsingItem))
-            {
-                player->UseInventoryItem(2);
-                bUsingItem = true;
-            }
-            else if ((input->bKey4 && !bUsingItem) || (inventoryItem == 3 && input->bKeyQ && !bUsingItem))
-            {
-                player->UseInventoryItem(3);
-                bUsingItem = true;
-            }
-            else if ((input->bKey5 && !bUsingItem) || (inventoryItem == 4 && input->bKeyQ && !bUsingItem))
-            {
-                player->UseInventoryItem(4);
-                bUsingItem = true;
-            }
-            else if ((input->bKey6 && !bUsingItem) || (inventoryItem == 5 && input->bKeyQ && !bUsingItem))
-            {
-                player->UseInventoryItem(5);
-                bUsingItem = true;
-            }
-            else if ((input->bKey7 && !bUsingItem) || (inventoryItem == 6 && input->bKeyQ && !bUsingItem))
-            {
-                player->UseInventoryItem(6);
-                bUsingItem = true;
-            }
-            else if ((input->bKey8 && !bUsingItem) || (inventoryItem == 7 && input->bKeyQ && !bUsingItem))
-            {
-                player->UseInventoryItem(7);
-                bUsingItem = true;
-            }
-            else if ((input->bKey9 && !bUsingItem) || (inventoryItem == 8 && input->bKeyQ && !bUsingItem))
-            {
-                player->UseInventoryItem(8);
-                bUsingItem = true;
-            }
-            if (bUsingItem)
-            {
-                // Spam Protection
-                if (!input->bTab && !input->bKey1 && !input->bKey2 && !input->bKey3 && !input->bKey4 && !input->bKey5 && !input->bKey6 && !input->bKey7 && !input->bKey8 && !input->bKey9 && !input->bKeyQ)
-                {
-                    bUsingItem = false;
-                }
-            }
+          
 
             // Maximum speed
             const float MAX_SPEED = 50.0f;

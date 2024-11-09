@@ -17,11 +17,10 @@
 #include "Entity.h"
 #include "Player.h"
 #include "Component.h"
-#include "ImGuiManager.h"
-#include "Item.h"
+
+
 
 // Can be removed if unused 
-#include "Tick.h"
 #include "memory" // for smart pointers
 
 // Systems
@@ -30,7 +29,7 @@
 #include "PhysicsSystem.h"
 #include "CollisionSystem.h"
 #include "InputSystem.h"
-#include "Resources/Systems/CombatSystem.h"
+
 
 
 #include <fstream>  // std::ifstream
@@ -78,7 +77,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // glfw window creation
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Basic RPG Game", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Final Folder", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -98,7 +97,8 @@ int main()
 
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
-    std::shared_ptr<ImGuiManager> imgui = std::make_shared<ImGuiManager>(window);
+   
+   
 
     // Shader setup
     std::shared_ptr<Shader> shaderProgram = std::make_shared<Shader>("default.vert", "default.frag");
@@ -139,7 +139,7 @@ int main()
     std::shared_ptr <PhysicsSystem> physicsSystem = std::make_shared<PhysicsSystem>();
     std::shared_ptr <CollisionSystem> collisionSystem = std::make_shared<CollisionSystem>();
 
-    //renderSystem->initalize(pointCloud);
+    renderSystem->initalize(pointCloud);
     renderSystem->initalize(splinesurface);
     
 
@@ -154,10 +154,7 @@ int main()
 
     //Add all components to storage for batch proccesing
     for (auto& entity : myEntities) {
-
-
         renderSystem->initalize(*entity);
-
 
     }
     
@@ -287,7 +284,7 @@ int main()
         glfwPollEvents();
     }
 
-    imgui->shutdown();
+   
     // Clearing GLFW resources
     glfwTerminate();
     return 0;

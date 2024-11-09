@@ -415,7 +415,7 @@ void Draw::InitalizePoints()
     VAO.LinkAttrib(VBO, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, x)); // Position
     VAO.LinkAttrib(VBO, 1, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, r)); // Color
     VAO.LinkAttrib(VBO, 2, 2, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, u)); // TexCoords
-
+    glPointSize(1.5f);
     // If using an EBO, you need to bind the EBO and upload index data
     if (!indices.empty()) // Check if you have index data
     {
@@ -812,12 +812,6 @@ void Draw::FollowPlayer(Draw& ball, float speed)
     }
 }
 
-
-
-void Draw::UpdateTick(float deltatime)
-{
-    
-}
 
 std::vector<glm::vec3> Draw::Readfile(const char* fileName)
 {

@@ -6,7 +6,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include "glm/glm.hpp"
-#include "Tick.h"
 #include <memory>
 #include <string>
 
@@ -25,7 +24,7 @@ struct Vertex
 
 };
 
-class Draw : public Tick {
+class Draw {
 public:
 	Draw();
 
@@ -59,7 +58,7 @@ public:
 	glm::vec3 deBoorSurface(int du, int dv, const std::vector<float>& knotsU, const std::vector<float>& knotsV, std::vector<glm::vec3> controlPoints, float u, float v);
 	glm::vec3 deBoor(int k, int degree, const std::vector<float>& knots, std::vector<glm::vec3> controlPoints, float t);
 	std::vector<glm::vec3> ReadLazFile(const std::string& filePath);
-	virtual void UpdateTick(float deltatime) override; 
+	
 	std::vector<glm::vec3> Readfile(const char* fileName);
 
 	//|-----------------------------------------------------------------------------|
