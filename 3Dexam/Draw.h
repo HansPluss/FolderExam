@@ -8,11 +8,26 @@
 #include "glm/glm.hpp"
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <functional>  // For std::hash
+
+
 
 class Shader;
 struct Cell; 
 class Grid; 
 class PositionComponent;
+
+	template <>
+	struct std::hash<glm::vec3> {
+		size_t operator()(const glm::vec3& v) const {
+			size_t h1 = std::hash<float>()(v.x);
+			size_t h2 = std::hash<float>()(v.y);
+			size_t h3 = std::hash<float>()(v.z);
+			return h1 ^ (h2 << 1) ^ (h3 << 2);  // Combine the three hashes
+		}
+	};
+
 struct Vertex
 {
 
@@ -22,6 +37,15 @@ struct Vertex
 	float normalx, normaly, normalz;
 
 
+};
+struct Triangle {
+
+	size_t p1, p2, p3;
+	bool isInvaild = false;
+};
+struct Edge {
+	glm::vec3 v1, v2;
+	bool isInvalid = false;
 };
 
 class Draw {
@@ -58,8 +82,10 @@ public:
 	glm::vec3 deBoorSurface(int du, int dv, const std::vector<float>& knotsU, const std::vector<float>& knotsV, std::vector<glm::vec3> controlPoints, float u, float v);
 	glm::vec3 deBoor(int k, int degree, const std::vector<float>& knots, std::vector<glm::vec3> controlPoints, float t);
 	std::vector<glm::vec3> ReadLazFile(const std::string& filePath);
+	std::vector<glm::vec3> Readfile(const char* filename);
+	bool isPointInCircumcircle(glm::vec3& p, glm::vec3& p1, glm::vec3& p2, glm::vec3& p3);
+	std::vector<Triangle> delaunayTriangulation(std::vector<glm::vec3>& points);
 	
-	std::vector<glm::vec3> Readfile(const char* fileName);
 
 	//|-----------------------------------------------------------------------------|
 	//|									Getters										|

@@ -130,7 +130,7 @@ int main()
     splinesurface.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinesurface");
 
     Entity pointCloud;
-    pointCloud.AddComponent<PositionComponent>(-607435.0f, -400.0f, -6750600.0f);
+    pointCloud.AddComponent<PositionComponent>(0.0f,0.0f,0.0f);
     pointCloud.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "pointcloud");
 
 
@@ -140,7 +140,7 @@ int main()
     std::shared_ptr <CollisionSystem> collisionSystem = std::make_shared<CollisionSystem>();
 
     renderSystem->initalize(pointCloud);
-    renderSystem->initalize(splinesurface);
+    //renderSystem->initalize(splinesurface);
     
 
 
@@ -213,7 +213,7 @@ int main()
  
 
     std::shared_ptr<Collision> collision = std::make_shared<Collision>();
-
+    int num = 0;
 
     // ---------------------------------------------------------------------------------------------------------------------------
     //                                                        Main Loop
@@ -224,7 +224,7 @@ int main()
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Wireframe mode
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Wireframe mode
 
         auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -241,12 +241,17 @@ int main()
         //camera->Position = glm::vec3(player.GetComponent<PositionComponent>()->position.x, camera->Position.y, player.GetComponent<PositionComponent>()->position.z + 25);
 
       
-        //poitcloud 
+        //pointcloud 
+       
         glBindTexture(GL_TEXTURE_2D, green.texture);
+
+        
+       
+       
 		renderSystem->RenderPoints(pointCloud, shaderProgram, viewproj);
 
-        glBindTexture(GL_TEXTURE_2D, green.texture);
-        renderSystem->Render(splinesurface, shaderProgram, viewproj);
+        //glBindTexture(GL_TEXTURE_2D, green.texture);
+        //renderSystem->Render(splinesurface, shaderProgram, viewproj);
         for (int i = 0; i < myEntities.size(); ++i) {
 
             if (myEntities[i]->GetComponent<RenderComponent>()->shape == "terrain") {

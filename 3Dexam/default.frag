@@ -60,8 +60,8 @@ void main()
     //mat.diffuse = vec3(texture(tex0, texCoord));
     //vec3 finalColor = mat.diffuse * color; 
     //FragColor = vec4(finalColor, 1.0f);
-	//FragColor = vec4(color, 1.0f);
+	
 
 	FragColor = spotLight();
-	
+	FragColor = vec4(color, 1.0f);
 }

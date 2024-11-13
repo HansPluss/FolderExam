@@ -8,7 +8,8 @@
 #include "Grid.h"
 #include "Component.h"
 #include <random> // For random seeds
- 
+
+
 Draw::Draw() : rotation(glm::quat(0.0, 0.0, 0.0, 0.0))
 {
 }
@@ -353,30 +354,66 @@ void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 
 void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 {
-	position = pos;
-	objSize = size;
+    position = pos;
+    objSize = size;
     const char* file = "32-2-516-156-31.txt";
-	std::vector<glm::vec3> pointCloud = Readfile(file);
+    std::vector<glm::vec3> pointCloud = Readfile(file);
+
+    // Assuming pointCloud has points arranged in a grid
+    int numCols = sqrt(pointCloud.size());  // Set based on your grid width
+    int numRows = sqrt(pointCloud.size());
+    float minHeight = std::numeric_limits<float>::max();
+    float maxHeight = std::numeric_limits<float>::lowest();
+
+    for (const auto& point : pointCloud) {
+        minHeight = std::min(minHeight, point.y);
+        maxHeight = std::max(maxHeight, point.y);
+    }
+    // Create vertices
     for (const auto& point : pointCloud) {
         Vertex vertex;
-
         vertex.x = point.x;
         vertex.y = point.y;
         vertex.z = point.z;
-
-        // Set UV coordinates based on some logic if needed
-        vertex.u = point.x; // Set these based on your requirements
+        vertex.u = point.x;
         vertex.v = point.y;
-
-        // Set colors, normals, etc. if available in LAZ
-        vertex.r = 1.0f; // Default or set based on your requirements
-        vertex.g = 1.0f;
-        vertex.b = 1.0f;
         
+        // Normalize height (y value) between 0 and 1
+        float normalizedHeight = (point.y - minHeight) / (maxHeight - minHeight);
+
+        // Map normalized height to a color gradient
+        vertex.r = normalizedHeight;       // Higher points more red
+        vertex.g = 1.0f - normalizedHeight; // Lower points more green
+        vertex.b = 0.5f * (1.0f - normalizedHeight); // Mid-to-low points bluer
+
         vertices.push_back(vertex);
     }
-    this->InitalizePoints();
+
+    // Generate indices for the grid pattern
+
+
+    float maxDistanceX = 1.0f; // Maximum distance allowed along the X-axis
+    float maxDistanceY = 1.0f; // Maximum distance allowed along the Y-axis
+    float maxDistanceZ = 1.0f; // Maximum distance allowed along the Z-axis
+    std::vector<size_t> pointsToDelete;
+    indices.clear();
+    std::vector<Triangle> delaunayTriangles = delaunayTriangulation(pointCloud);
+    std::cout << " TRIANGELS: " << delaunayTriangles.size() << std::endl;
+    // Clear indices
+    indices.clear();
+    for (auto& tri : delaunayTriangles) {
+        indices.push_back(tri.p1);
+        indices.push_back(tri.p2);
+        indices.push_back(tri.p3);
+        
+    }
+
+    // Initialize buffers and upload to the GPU
+    this->Initalize();
+
+  
 }
+
 
 
 
@@ -424,9 +461,15 @@ void Draw::InitalizePoints()
         EBO1.Unbind(); // Unbind EBO after uploading data
     }
 
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+    glPointSize(100.5f);
     // Unbinding VAO and VBO after setup
     VAO.Unbind();
     VBO.Unbind();
+    
+   
 }
 
 void Draw::Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, PositionComponent& pos)
@@ -445,6 +488,7 @@ void Draw::Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, Pos
     EBO1.Bind();
 
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+   
     // glDrawArrays(GL_POINT, 0, vertices.size());
      //unbind
     VAO.Unbind();
@@ -473,13 +517,15 @@ void Draw::RenderPoints(const std::shared_ptr<Shader>& shader, glm::mat4 viewpro
 
     VAO.Bind();
     VBO.Bind();
-
+    EBO1.Bind();
     // Adjust point size as needed
-    glDrawArrays(GL_POINTS, 0, vertices.size()); // Use GL_POINTS instead of GL_POINT
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0); // Use GL_POINTS instead of GL_POINT
+    //glDrawArrays(GL_POINTS, 0, vertices.size());
    // glPointSize(1.0f);
     // Unbind
     VAO.Unbind();
     VBO.Unbind();
+    EBO1.Unbind();
 }
 
 
@@ -815,8 +861,11 @@ void Draw::FollowPlayer(Draw& ball, float speed)
 
 std::vector<glm::vec3> Draw::Readfile(const char* fileName)
 {
+  
     std::ifstream inputFile(fileName);
+    std::istringstream iss;
     std::vector<glm::vec3> pointCloud;
+    pointCloud.reserve(2600000);
     if (inputFile.is_open()) {
 
         std::string line;
@@ -825,10 +874,18 @@ std::vector<glm::vec3> Draw::Readfile(const char* fileName)
         char comma; // to capture the commas in the file
         glm::vec3 point;
 
-
+        int pointSkip = 0;
         while (inputFile >> point.x >> comma >> point.z >> comma >> point.y) {
-
-            pointCloud.push_back(point);
+            pointSkip++;
+            if (pointSkip % 10 == 0) {
+                point.x -= 608016.02;
+                point.y -= 336.8007;
+                point.z -= 6750620.771;
+                pointCloud.push_back(point);
+            }
+           
+ 
+         
         }
 
         inputFile.close();
@@ -836,9 +893,157 @@ std::vector<glm::vec3> Draw::Readfile(const char* fileName)
     else {
         std::cerr << "Unable to open the input file for reading." << std::endl;
     }
-    std::cout << "point Cloud " << pointCloud.size();
+    std::cout << "point Cloud " << pointCloud.size() << std::endl;
     return pointCloud;
 
+}
+bool isCounterClockwise(const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) {
+    // Calculate the signed area (twice) of the triangle
+    double area2 = (p2.x - p1.x) * (p3.z - p1.z) - (p2.z - p1.z) * (p3.x - p1.x);
+    return area2 > 0;
+}
+
+bool Draw::isPointInCircumcircle(glm::vec3& p, glm::vec3& p1, glm::vec3& p2, glm::vec3& p3)
+{
+  
+    // Translating points relative to `p`
+    double ax = p1.x - p.x;
+    double az = p1.z - p.z;
+    double bx = p2.x - p.x;
+    double bz = p2.z - p.z;
+    double cx = p3.x - p.x;
+    double cz = p3.z - p.z;
+
+    // Squared lengths from p to p1, p2, and p3
+    double A = ax * ax + az * az;
+    double B = bx * bx + bz * bz;
+    double C = cx * cx + cz * cz;
+
+    // Determinant for circumcircle test
+    double det = ax * (bz * C - B * cz) - az * (bx * C - B * cx) + A * (bx * cz - bz * cx);
+    //std::cout << "Radius " << det << std::endl;
+    // If determinant is positive, point `p` is inside the circumcircle of p1, p2, p3
+    return det > 0.0;
+
+  
+   
 
 }
+
+std::vector<Triangle> Draw::delaunayTriangulation(std::vector<glm::vec3>& points)
+{
+    std::vector<Triangle> triangles;
+    if (points.size() < 3) return triangles; // Need at least 3 points for triangulation
+    triangles.reserve(2600000);
+
+    // Step 1: Calculate bounds of the point cloud in the xz plane
+    float minX = std::numeric_limits<float>::max();
+    float maxX = std::numeric_limits<float>::lowest();
+    float minZ = std::numeric_limits<float>::max();
+    float maxZ = std::numeric_limits<float>::lowest();
+
+    for (auto& point : points) {
+        minX = std::min(minX, point.x);
+        maxX = std::max(maxX, point.x);
+        minZ = std::min(minZ, point.z);
+        maxZ = std::max(maxZ, point.z);
+    }
+
+    // Step 2: Define a super-triangle large enough to encompass all points
+    float dx = maxX - minX;
+    float dz = maxZ - minZ;
+    float deltaMax = std::max(dx, dz);
+    float midX = (minX + maxX) / 2.0f;
+    float midZ = (minZ + maxZ) / 2.0f;
+
+    float offsetMultiplier = 20.0f; // Experiment with a multiplier (e.g., 10, 20)
+    glm::vec3 superP1(midX - offsetMultiplier * deltaMax, 0.0f, midZ - deltaMax);
+    glm::vec3 superP2(midX + offsetMultiplier * deltaMax, 0.0f, midZ - deltaMax);
+    glm::vec3 superP3(midX, 0.0f, midZ + deltaMax);
+
+    // Add super-triangle to points
+    points.push_back(superP1);
+    points.push_back(superP2);
+    points.push_back(superP3);
+
+    // Step 3: Initialize the triangles with the super-triangle indices
+    triangles.push_back({ points.size() - 3, points.size() - 2, points.size() - 1 });
+
+    // Step 4: Incrementally add each point in the point cloud to the triangulation
+    std::unordered_map<glm::vec3, size_t, std::hash<glm::vec3>> pointIndexMap;
+    for (size_t i = 0; i < points.size(); ++i) {
+        pointIndexMap[points[i]] = i;
+    }
+
+    for (size_t i = 0; i < points.size() - 3; ++i) {
+        glm::vec3& p = points[i];
+        std::vector<Edge> polygon;
+
+        // Mark triangles whose circumcircles contain the point
+        for (auto it = triangles.begin(); it != triangles.end(); /* no increment */) {
+            Triangle& tri = *it;
+            glm::vec3& p1 = points[tri.p1];
+            glm::vec3& p2 = points[tri.p2];
+            glm::vec3& p3 = points[tri.p3];
+
+            if (isPointInCircumcircle(p, p1, p2, p3)) {
+                polygon.push_back({ p1, p2 });
+                polygon.push_back({ p2, p3 });
+                polygon.push_back({ p3, p1 });
+                it = triangles.erase(it);  // Remove the invalidated triangle
+            }
+            else {
+                ++it;
+            }
+        }
+
+        if (!polygon.empty()) {
+            std::cout << "Polygon edges added for point " << i << ": " << polygon.size() << std::endl;
+        }
+
+        // Remove duplicate edges from polygon
+        for (auto e1 = polygon.begin(); e1 != polygon.end(); ++e1) {
+            for (auto e2 = e1 + 1; e2 != polygon.end(); ++e2) {
+                if ((e1->v1 == e2->v2 && e1->v2 == e2->v1) || (e1->v1 == e2->v1 && e1->v2 == e2->v2)) {
+                    e1->isInvalid = e2->isInvalid = true;
+                }
+            }
+        }
+
+        polygon.erase(std::remove_if(polygon.begin(), polygon.end(), [](Edge& e) { return e.isInvalid; }), polygon.end());
+
+        for (auto& edge : polygon) {
+            auto it_v1 = pointIndexMap.find(edge.v1);
+            auto it_v2 = pointIndexMap.find(edge.v2);
+
+            if (it_v1 != pointIndexMap.end() && it_v2 != pointIndexMap.end()) {
+                size_t index_v1 = it_v1->second;
+                size_t index_v2 = it_v2->second;
+
+                // Create the triangle using these indices
+                triangles.push_back({ index_v1, index_v2, i });
+            }
+        }
+    }
+
+    // Step 5: Remove triangles connected to super-triangle vertices
+    size_t superIdx1 = points.size() - 3, superIdx2 = points.size() - 2, superIdx3 = points.size() - 1;
+    triangles.erase(
+        std::remove_if(triangles.begin(), triangles.end(), [superIdx1, superIdx2, superIdx3](const Triangle& tri) {
+            return tri.p1 == superIdx1 || tri.p2 == superIdx1 || tri.p3 == superIdx1 ||
+                tri.p1 == superIdx2 || tri.p2 == superIdx2 || tri.p3 == superIdx2 ||
+                tri.p1 == superIdx3 || tri.p2 == superIdx3 || tri.p3 == superIdx3;
+            }),
+        triangles.end()
+    );
+
+    // Remove super-triangle points from points vector
+    points.erase(points.end() - 3, points.end());
+
+    return triangles;
+
+       
+}
+
+
 
