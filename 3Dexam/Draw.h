@@ -68,7 +68,7 @@ public:
 	//|-----------------------------------------------------------------------------|		
 	void Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, PositionComponent& pos);
 	void RenderPoints(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj);
-	std::vector<glm::vec3> EvaluateBiquadratic(int my_u, int my_v, glm::vec3& bu, glm::vec3& bv);
+	glm::vec3 EvaluateBiquadratic(int my_u, int my_v, glm::vec3& bu, glm::vec3& bv, std::vector<std::vector<glm::vec3>> c, float t_u,float t_v);
 	void Update(float deltaTime, Grid* grid);
 	void ApplyForce(glm::vec3 force);
 	void MoveXdir();
@@ -76,17 +76,17 @@ public:
 	void RotateCube(float deltaTime);
 	void CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal);
 	void FollowPlayer(Draw& ball, float speed);
-	void MakeBiquadraticSurface();
+	void MakeBiquadraticSurface(const int n_u, const int n_v, int d_u, int d_v, std::vector<std::vector<glm::vec3>> c);
 	std::pair<glm::vec3, glm::vec3> B2(float tu, float tv, int my_u, int my_v);
 	int FindKnotInterval(const std::vector<float>& knots, int degree, int n, float t);
-	glm::vec3 deBoorSurface(int du, int dv, const std::vector<float>& knotsU, const std::vector<float>& knotsV, std::vector<glm::vec3> controlPoints, float u, float v);
+	glm::vec3 deBoorSurface(int du, int dv, const std::vector<float>& knotsU, const std::vector<float>& knotsV, std::vector<glm::vec3> controlPoints, float u, float v, const int n_u, const int n_v);
 	glm::vec3 deBoor(int k, int degree, const std::vector<float>& knots, std::vector<glm::vec3> controlPoints, float t);
 	std::vector<glm::vec3> ReadLazFile(const std::string& filePath);
 	std::vector<glm::vec3> Readfile(const char* filename);
 	bool isPointInCircumcircle(glm::vec3& p, glm::vec3& p1, glm::vec3& p2, glm::vec3& p3);
 	std::vector<Triangle> delaunayTriangulation(std::vector<glm::vec3>& points);
-	
-
+	std::vector<glm::vec3> CalculateBaryCentricCoordinates(std::vector<unsigned int> indices,std::vector<Vertex> vertecies);
+	std::vector<float> CreateClampedKnotVector(int numControlPoints, int degree);
 	//|-----------------------------------------------------------------------------|
 	//|									Getters										|
 	//|-----------------------------------------------------------------------------|
@@ -99,7 +99,7 @@ public:
 	std::vector<Vertex> GetVertices() { return vertices; };
 	std::vector<unsigned int> GetIndices() { return indices; };
 	float GetGravity() { return gravity; };
-	
+	float EvaluateBiquadraticBasis(int i, int degree, float t, const std::vector<float>& knotVector);
 
 	//|-----------------------------------------------------------------------------|
 	//|									Setters										|
@@ -131,6 +131,9 @@ private:
 	//|-----------------------------------------------------------------------------|
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
+
+	std::vector<Vertex> pointCloudvertices;
+	std::vector<unsigned int> pointCloundindices;
 	glm::vec3 position = glm::vec3(0, 0, 0);
 	glm::mat4 rotation = glm::mat4(1.0f);
 	glm::vec3 objSize = glm::vec3(1, 1, 1);
@@ -144,16 +147,13 @@ private:
 	//|-----------------------------------------------------------------------------|
     //|								Biquadratic B-Spline								|
     //|-----------------------------------------------------------------------------|
-	int n_u = 4; // controll points for u
-	int n_v = 3; // controll points for v
-	int d_u = 2;
-	int d_v = 2;
+	
 	float hu = 0.1f, hv = 0.1f;
 	std::vector <float> mu; // vector u
 	std::vector <float> mv; // vector v
 	
 	std::vector<glm::vec3> mc; // controll points u direction
-	glm::vec3 c[4][3];
+	
 
 	//|-----------------------------------------------------------------------------|
 	//|								Class initalizing								|

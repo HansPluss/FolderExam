@@ -127,7 +127,7 @@ int main()
 
     Entity splinesurface;
     splinesurface.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
-    splinesurface.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinesurface");
+    splinesurface.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinesurface");
 
     Entity pointCloud;
     pointCloud.AddComponent<PositionComponent>(0.0f,0.0f,0.0f);
@@ -139,16 +139,16 @@ int main()
     std::shared_ptr <PhysicsSystem> physicsSystem = std::make_shared<PhysicsSystem>();
     std::shared_ptr <CollisionSystem> collisionSystem = std::make_shared<CollisionSystem>();
 
-    renderSystem->initalize(pointCloud);
-    //renderSystem->initalize(splinesurface);
-    
+    //renderSystem->initalize(pointCloud);
+    renderSystem->initalize(splinesurface);
+   
 
 
   
 
     // Intializing entity vector
     std::vector<Entity*> myEntities;
-    //myEntities.push_back(&player);
+    //myEntities.push_back(&splinesurface);
     //myEntities.push_back(&planeObject);
    
 
@@ -175,7 +175,7 @@ int main()
 
     // Camera FOV & starting position
     std::shared_ptr<Camera> camera = std::make_shared<Camera>(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 0.0f, 0.0f));
-
+    //607200.3700,6750618.6100,270.2300
     // Initalizing textures
     Texture wood("Resources/Textures/wood.png", shaderProgram);
     Texture green("Resources/Textures/green.jpg", shaderProgram);
@@ -238,23 +238,21 @@ int main()
         // Setup camera settings and inputs
         camera->Inputs(window);
         glm::mat4 viewproj = camera->Matrix(45.0f, 0.1f, 1000.0f, shaderProgram, "camMatrix");
-        //camera->Position = glm::vec3(player.GetComponent<PositionComponent>()->position.x, camera->Position.y, player.GetComponent<PositionComponent>()->position.z + 25);
+       // camera->Position = glm::vec3(player.GetComponent<PositionComponent>()->position.x, camera->Position.y, player.GetComponent<PositionComponent>()->position.z + 25);
 
       
         //pointcloud 
        
         glBindTexture(GL_TEXTURE_2D, green.texture);
 
-        
-       
-       
 		renderSystem->RenderPoints(pointCloud, shaderProgram, viewproj);
 
-        //glBindTexture(GL_TEXTURE_2D, green.texture);
-        //renderSystem->Render(splinesurface, shaderProgram, viewproj);
+        glBindTexture(GL_TEXTURE_2D, green.texture);
+        renderSystem->Render(splinesurface, shaderProgram, viewproj);
+
         for (int i = 0; i < myEntities.size(); ++i) {
 
-            if (myEntities[i]->GetComponent<RenderComponent>()->shape == "terrain") {
+            if (myEntities[i]->GetComponent<RenderComponent>()->shape == "bsplinesurface") {
                 glBindTexture(GL_TEXTURE_2D, green.texture);
 
             }
@@ -281,7 +279,7 @@ int main()
        
 
         //Deletes the entities
-        manager->DeleteEntities(myEntities);
+        //manager->DeleteEntities(myEntities);
         //UI display
         //imgui->BasicText("Inventory", player);
 
