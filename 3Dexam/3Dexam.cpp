@@ -121,9 +121,18 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
 
     // Terrain Entity
-    Entity planeObject;
-    planeObject.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
-    planeObject.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
+    Entity ballObject;
+    ballObject.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
+    ballObject.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
+    ballObject.AddComponent<VelocityComponent>();
+    ballObject.AddComponent<AccelerationComponent>(10);
+    ballObject.AddComponent<PhysicsComponet>();
+    Entity ballObject_2;
+    ballObject_2.AddComponent<PositionComponent>(0.0f, 2.0f, 0.0f);
+    ballObject_2.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
+    ballObject_2.AddComponent<VelocityComponent>();
+    ballObject_2.AddComponent<AccelerationComponent>();
+    ballObject_2.AddComponent<PhysicsComponet>(1);
 
     Entity splinesurface;
     splinesurface.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
@@ -139,17 +148,21 @@ int main()
     std::shared_ptr <PhysicsSystem> physicsSystem = std::make_shared<PhysicsSystem>();
     std::shared_ptr <CollisionSystem> collisionSystem = std::make_shared<CollisionSystem>();
 
-    //renderSystem->initalize(pointCloud);
-    renderSystem->initalize(splinesurface);
+    renderSystem->initalize(pointCloud);
+    renderSystem->initalize(ballObject);
    
+    int cellSize = 8;
+    int gridSizeX = 1000;
+    int gridSizeZ = 1000;
+    std::unique_ptr<Grid> m_grid = std::make_unique<Grid>(gridSizeX, gridSizeZ, cellSize);
 
-
-  
-
+    m_grid->AddBaLL(&ballObject);
+    m_grid->AddBaLL(&ballObject_2);
     // Intializing entity vector
     std::vector<Entity*> myEntities;
-    //myEntities.push_back(&splinesurface);
-    //myEntities.push_back(&planeObject);
+    myEntities.push_back(&ballObject);
+    myEntities.push_back(&ballObject_2);
+    myEntities.push_back(&splinesurface);
    
 
     //Add all components to storage for batch proccesing
@@ -239,17 +252,12 @@ int main()
         camera->Inputs(window);
         glm::mat4 viewproj = camera->Matrix(45.0f, 0.1f, 1000.0f, shaderProgram, "camMatrix");
        // camera->Position = glm::vec3(player.GetComponent<PositionComponent>()->position.x, camera->Position.y, player.GetComponent<PositionComponent>()->position.z + 25);
-
-      
         //pointcloud 
+        glBindTexture(GL_TEXTURE_2D, green.texture);
+        renderSystem->RenderPoints(pointCloud, shaderProgram, viewproj);
+        
+        collision->UpdateCollision(m_grid.get(), dt);
        
-        glBindTexture(GL_TEXTURE_2D, green.texture);
-
-		renderSystem->RenderPoints(pointCloud, shaderProgram, viewproj);
-
-        glBindTexture(GL_TEXTURE_2D, green.texture);
-        renderSystem->Render(splinesurface, shaderProgram, viewproj);
-
         for (int i = 0; i < myEntities.size(); ++i) {
 
             if (myEntities[i]->GetComponent<RenderComponent>()->shape == "bsplinesurface") {
@@ -266,11 +274,11 @@ int main()
            
 
             //Gives movement/physics to entities
-            //physicsSystem->Update(*myEntities[i], dt);
+            physicsSystem->Update(*myEntities[i], dt);
             //Calculates the collisions
-            //collisionSystem->BarycentricCoordinates(*myEntities[i], planeObject, physicsSystem);
+            collisionSystem->BarycentricCoordinates(*myEntities[i],pointCloud, physicsSystem);
             //Renders the entities
-            renderSystem->Render(*myEntities[i], shaderProgram, viewproj);
+            renderSystem->RenderPoints(*myEntities[i], shaderProgram, viewproj);
             
             
             

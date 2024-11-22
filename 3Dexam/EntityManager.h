@@ -9,7 +9,7 @@ public:
     //Creates entites and puts them in a vector
     Entity& CreateEntity() {
         entities.push_back(std::make_unique<Entity>());
- 
+
         return *entities.back();
     }
     //Creates entities that inherit from another class like player, enemy etc
@@ -20,20 +20,48 @@ public:
         return *static_cast<T*>(entities.back().get());
     }
     //Deletes all entities that are marked
-    void DeleteEntities(std::vector<Entity*>& entities) {
+    void DeleteEntities(std::vector<Entity*>& entities, PositionStorage& positionStorage, AccelerationStorage& accelerationStorage, VelocityStorage& velocityStorage) {
         for (auto it = entities.begin(); it != entities.end();) {
             if ((*it)->isMarkedForDeletion) {
-                
+
+                if ((*it)->GetComponent<PositionComponent>()) {
+                    //positionStorage.RemovePositionByEntityID((*it)->id);
+
+                }
+                if ((*it)->GetComponent<VelocityComponent>()) {
+                    //velocityStorage.RemoveVelocityByEntityID((*it)->id);
+
+                }
+                if ((*it)->GetComponent<AccelerationComponent>()) {
+                    //accelerationStorage.RemoveAccelerationByEntityID((*it)->id);
+
+                }
+
                 it = entities.erase(it);
             }
             else {
-                ++it; 
+                ++it;
             }
         }
 
     }
     //Extra function for marking entities
-    void MarkForDeletion(Entity& entity) {
+    void MarkForDeletion(Entity& entity, PositionStorage& positionStorage, AccelerationStorage& accelerationStorage, VelocityStorage& velocityStorage) {
+        if (entity.GetComponent<PositionComponent>()) {
+
+            positionStorage.RemovePositionByEntityID(entity.GetId());
+        }
+        if (entity.GetComponent<VelocityComponent>()) {
+
+            velocityStorage.RemoveVelocityByEntityID(entity.GetId());
+        }
+        if (entity.GetComponent<AccelerationComponent>()) {
+
+            accelerationStorage.RemoveAccelerationByEntityID(entity.GetId());
+
+
+        }
+
         entity.isMarkedForDeletion = true;
 
     }
@@ -41,7 +69,7 @@ public:
     std::vector<std::unique_ptr<Entity>>& GetEntities() {
         return entities;
     }
-   
+
 private:
     std::vector<std::unique_ptr<Entity>> entities;
 

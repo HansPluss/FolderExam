@@ -21,25 +21,30 @@ public:
 		for (size_t i = 0; i < entityList.size(); ++i) {
 
 			// Access the entity via pointer in the entityList
-			if (entityList[i]->GetComponent<PositionComponent>() && entityList[i]->GetComponent<VelocityComponent>() && entityList[i]->GetComponent<AccelerationComponent>()) {
-				// Update the PositionComponent with the new position
-				rigidBody.DODUpdate(storage, aStorage, vStorage, entityList, deltatime);
-			}
+
+			// Update the PositionComponent with the new position
+			rigidBody.DODUpdate(storage, aStorage, vStorage, entityList, deltatime);
+
 		}
 	}
 	void ApplyForce(Entity& entity, glm::vec3 force) {
-		
+
 		if (entity.isMarkedForDeletion) return;
 		auto* accelerationComponent = entity.GetComponent<AccelerationComponent>();
 		if (accelerationComponent) {
-			
+
 			rigidBody.ApplyForce(*accelerationComponent, force);
 		}
 	}
-	glm::vec3 CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal) {
-		
+	void ApplyDODForce(AccelerationStorage& aStorage, glm::vec3 force, int Id) {
 
-		return rigidBody.CalculateGravity(inclineAngle,slopeVector,normal);
+		//rigidBody.DODApplyForce(aStorage, force, Id);
+
+	}
+	glm::vec3 CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal) {
+
+
+		return rigidBody.CalculateGravity(inclineAngle, slopeVector, normal);
 	}
 
 };

@@ -291,45 +291,20 @@ void Draw::DrawTerrain(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 {
     // Set the object's position and size
-    const char* file = "32-2-516-156-31.txt";
-    std::vector<glm::vec3> pointCloud = Readfile(file);
     
-    vertices.clear();
-    for (const auto& point : pointCloud) {
-        Vertex vertex;
-        vertex.x = point.x;
-        vertex.y = point.y;
-        vertex.z = point.z;
-        vertex.u = point.x;
-        vertex.v = point.y;
-
-
-        pointCloudvertices.push_back(vertex);
-       
-    }
-
-    pointCloundindices.clear();
-    std::vector<Triangle> delaunayTriangles = delaunayTriangulation(pointCloud);
-    std::cout << "TRIANGLES: " << delaunayTriangles.size() << std::endl;
-    for (auto& tri : delaunayTriangles) {
-        pointCloundindices.push_back(tri.p1);
-        pointCloundindices.push_back(tri.p2);
-        pointCloundindices.push_back(tri.p3);
-    }
-    std::vector<glm::vec3> controlpoints = CalculateBaryCentricCoordinates(pointCloundindices, pointCloudvertices);
-    mc = controlpoints;
+    //mc = controlpoints;
     // Initialize B-Spline parameters
-    const int n_u = sqrt(pointCloud.size()); // Number of control points in u direction
-    const int n_v = sqrt(pointCloud.size()); // Number of control points in v direction
-    int d_u = 2; // Degree in u direction
-    int d_v = 2; // Degree in v direction
+  
 
     // Initialize knot vectors
     mu.clear();
-    int knotUSize = n_u + d_u + 1;
-    mu.resize(knotUSize);
-    mu = CreateClampedKnotVector(n_u, d_u);
-    mv = CreateClampedKnotVector(n_v, d_v);
+    mu.push_back(0); mu.push_back(0); mu.push_back(0);
+    mu.push_back(1);
+    mu.push_back(2); mu.push_back(2); mu.push_back(2);
+
+    mv.clear();
+    mv.push_back(0); mv.push_back(0); mv.push_back(0);
+    mv.push_back(1); mv.push_back(1); mv.push_back(1);
 
     // Debugging: Print the knot vectors
     std::cout << "Knot vector mu: ";
@@ -339,47 +314,32 @@ void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
     std::cout << "Knot vector mv: ";
     for (float v : mv) std::cout << v << " ";
     std::cout << std::endl;
-    //for (int i = 0; i <= n_u + d_u; ++i) {
-    //    if (i < d_u + 1) {
-    //        mu[i] = 0;
-    //    }
-    //    else if (i >= n_u) {
-    //        mu[i] = n_u;  // Correct this
-    //    }
-    //    else {
-    //        mu[i] = i - d_u;
-    //    }
-    //}
-
-    //mv.clear();
-    //int knotVSize = n_v + d_v + 1;
-    //mv.resize(knotVSize);
-    //for (int i = 0; i <= n_v + d_v; ++i) {
-    //    if (i < d_v + 1) {
-    //        mv[i] = 0;
-    //    }
-    //    else if (i >= n_v) {
-    //        mv[i] = n_v;  // Correct this
-    //    }
-    //    else {
-    //        mv[i] = i - d_v;
-    //    }
-    //}
+    
 
 
     // Check if we have enough control points
-    if (pointCloud.size() < n_u * n_v) {
-        std::cerr << "Error: Not enough control points initialized." << std::endl;
-        return; // Early exit if there aren't enough control points
-    }
+   
 
     
-    mc = pointCloud;
+    mc.push_back(glm::vec3(0, 0, 0));  // (x, z, y) -> (x, y, z)
+    mc.push_back(glm::vec3(1, 0, 0));
+    mc.push_back(glm::vec3(2, 0, 0));
+    mc.push_back(glm::vec3(3, 0, 0));
+
+    mc.push_back(glm::vec3(0, 0, 1));  // Previously (0, 1, 0), now (0, 0, 1)
+    mc.push_back(glm::vec3(1, 2, 1));  // Previously (1, 1, 1), remains same
+    mc.push_back(glm::vec3(2, 2, 1));
+    mc.push_back(glm::vec3(3, 0, 1));  // Previously (3, 1, 0), now (3, 0, 1)
+
+    mc.push_back(glm::vec3(0, 0, 2));  // Previously (0, 2, 0), now (0, 0, 2)
+    mc.push_back(glm::vec3(1, 0, 2));  // Previously (1, 2, 1), now (1, 1, 2)
+    mc.push_back(glm::vec3(2, 0, 2));
+    mc.push_back(glm::vec3(3, 0, 2));  // Previously (3, 2, 0), now (3, 0, 2)
     // Map the flat control point array mc to the 2D grid c
     std::vector<std::vector<glm::vec3>> c(n_u, std::vector<glm::vec3>(n_v));
     for (int i = 0; i < n_u; ++i) {
         for (int j = 0; j < n_v; ++j) {
-            c[i][j] = mc[ i * n_v + j];  // Correct mapping
+            c[i][j] = mc[j * n_u + i]; // Correct mapping
         }
     }
 
@@ -562,11 +522,11 @@ void Draw::Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, Pos
 
 }
 
-void Draw::RenderPoints(const std::shared_ptr<Shader>& shader, glm::mat4 viewproj)
+void Draw::RenderPoints(const std::shared_ptr<Shader>& shader, glm::mat4 viewproj, PositionComponent& pos)
 {
     glm::mat4 model2 = glm::mat4(1.0f);
 
-    model2 = glm::translate(model2, position);
+    model2 = glm::translate(model2, pos.position);
     model2 = glm::scale(model2, objSize);
 
     // Get the uniform location
@@ -612,55 +572,30 @@ glm::vec3 Draw::EvaluateBiquadratic(int my_u, int my_v, glm::vec3& bu,glm::vec3&
 }
 void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, std::vector<std::vector<glm::vec3>> c)
 {
-    float h = 1.1f; // Spacing
-    float u_range = mu[n_u + d_u] - mu[d_u];
-    float v_range = mv[n_v + d_v] - mv[d_v];
-    int nu = static_cast<int>((mu[n_u] - mu[d_u]) / h) + 1; // Include the last point
-    int nv = static_cast<int>((mv[n_v] - mv[d_v]) / h) + 1; // Include the last point
-    h = std::min(u_range / nu, v_range / nv);
-    std::cout << "GENERATING B-SPLINE" << std::endl;
-    int barWidth = 50;
-    int processedLines = 0;
-    int totalLines = nv;
+    float h = 0.1f; // Spacing
+    int nu = static_cast<int>((mu[n_u] - mu[d_u]) / h);  // Calculate the number of steps in u
+    int nv = static_cast<int>((mv[n_v] - mv[d_v]) / h);  // Calculate the number of steps in v
+
     // Iterate through v and u to generate surface points
     for (int i = 0; i < nv; ++i)
     {
-        float t_u = static_cast<float>(i) / u_range * (n_u - d_u);
-        processedLines++;
-        if (processedLines % 1 == 0 || processedLines == totalLines) {
-            float progress = static_cast<float>(processedLines) / totalLines;
-            int pos = barWidth * progress;
-            std::cout << "\r[";  // Start overwriting the same line
-            for (int i = 0; i < barWidth; ++i) {
-                if (i < pos) std::cout << "=";
-                else if (i == pos) std::cout << ">";
-                else std::cout << " ";
-            }
-            std::cout << "] " << int(progress * 100.0f) << "%";
-            std::flush(std::cout);
-        }
-        
         for (int j = 0; j < nu; ++j)
         {
-            float t_v = static_cast<float>(j) / v_range * (n_v - d_v);
             float u = j * h;
             float v = i * h;
-            
+
             // Find the corresponding knot intervals for u and v
-            int my_u = FindKnotInterval(mu, d_u, n_u, u);
-            int my_v = FindKnotInterval(mv, d_v, n_v, v);
+            //int my_u = FindKnotInterval(mu, d_u, n_u, u);
+            //int my_v = FindKnotInterval(mv, d_v, n_v, v);
 
             // Calculate the basis function coefficients for the current u and v
-            auto koeff_par = B2(u, v, my_u, my_v);
+            //auto koeff_par = B2(u, v, my_u, my_v);
 
             // Evaluate the biquadratic surface at the current u and v
-            glm::vec3 surfacePoint = deBoorSurface(d_u, d_v, mu, mv, mc, u, v, n_u,n_v);
-           
+            glm::vec3 surfacePoint = deBoorSurface(d_u, d_v, mu, mv, mc, u, v);
 
-            // Evaluate the biquadratic surface at the current u and v
-            //glm::vec3 surfacePoint = EvaluateBiquadratic(my_u, my_v, koeff_par.first,koeff_par.second, c,t_u,t_v); // Adjust this to fit your EvaluateBiquadratic call
             Vertex vertex;
-           
+
             // Assign the position values from the evaluated surface point
             vertex.x = surfacePoint.x;
             vertex.y = surfacePoint.y;
@@ -670,14 +605,7 @@ void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, s
             vertex.r = 1.0f;
             vertex.g = 1.0f;
             vertex.b = 1.0f;
-            /*glm::vec3 du = deBoorSurface(d_u, d_v, mu, mv, mc, u + h, v) -
-                deBoorSurface(d_u, d_v, mu, mv, mc, u - h, v);
-            glm::vec3 dv = deBoorSurface(d_u, d_v, mu, mv, mc, u, v + h) -
-                deBoorSurface(d_u, d_v, mu, mv, mc, u, v - h);
-            glm::vec3 normal = glm::normalize(glm::cross(du, dv));
-            vertex.normalx = normal.x;
-            vertex.normaly = normal.y;
-            vertex.normalz = normal.z;*/
+
             vertex.u = static_cast<float>(j) / (nu - 1); // Column index normalized
             vertex.v = static_cast<float>(i) / (nv - 1); // Row index normalized
 
@@ -689,31 +617,26 @@ void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, s
             vertices.push_back(vertex);
         }
     }
-   
-   // Generate indices for the triangle mesh
-for (int i = 0; i < nv - 1; ++i) { // Loop through rows (v-direction)
-    for (int j = 0; j < nu - 1; ++j) { // Loop through columns (u-direction)
-        // Index of the current vertex
-        int idx1 = i * nu + j;
-        // Index of the vertex to the right
-        int idx2 = idx1 + 1;
-        // Index of the vertex below
-        int idx3 = (i + 1) * nu + j;
-        // Index of the vertex diagonally below-right
-        int idx4 = idx3 + 1;
 
-        // Form two triangles for the current quad:
-        // Triangle 1: (idx1, idx2, idx3)
-        indices.push_back(idx1);
-        indices.push_back(idx2);
-        indices.push_back(idx3);
+    // Generate indices for the triangle mesh
+    for (int i = 0; i < nv - 1; ++i) {
+        for (int j = 0; j < nu - 1; ++j) {
+            int idx1 = i * nu + j;
+            int idx2 = idx1 + 1;
+            int idx3 = idx1 + nu;
+            int idx4 = idx3 + 1;
 
-        // Triangle 2: (idx2, idx4, idx3)
-        indices.push_back(idx2);
-        indices.push_back(idx4);
-        indices.push_back(idx3);
+            // First triangle (idx1, idx2, idx3)
+            indices.push_back(idx1);
+            indices.push_back(idx2);
+            indices.push_back(idx3);
+
+            // Second triangle (idx2, idx4, idx3)
+            indices.push_back(idx2);
+            indices.push_back(idx4);
+            indices.push_back(idx3);
+        }
     }
-}
 }
 
 std::pair<glm::vec3, glm::vec3> Draw::B2(float tu, float tv, int my_u, int my_v)
@@ -748,7 +671,7 @@ int Draw::FindKnotInterval(const std::vector<float>& knots, int degree, int n, f
     std::cout << "could not find knot" << std::endl;
     return -1;
 }
-glm::vec3 Draw::deBoorSurface(int du, int dv, const std::vector<float>& knotsU, const std::vector<float>& knotsV, std::vector<glm::vec3> controlPoints, float u, float v, const int n_u,const int n_v)
+glm::vec3 Draw::deBoorSurface(int du, int dv, const std::vector<float>& knotsU, const std::vector<float>& knotsV, std::vector<glm::vec3> controlPoints, float u, float v)
 {
     // Step 1: Apply de Boor along the u-direction
     std::vector<glm::vec3> tempPoints;
@@ -994,7 +917,7 @@ std::vector<glm::vec3> Draw::Readfile(const char* fileName)
         int pointSkip = 0;
         while (inputFile >> point.x >> comma >> point.z >> comma >> point.y) {
             pointSkip++;
-            if (pointSkip % 25 == 0) {
+            if (pointSkip % 1000 == 0) {
                 point.x -= 608016.02;
                 point.y -= 336.8007;
                 point.z -= 6750620.771;
@@ -1091,7 +1014,10 @@ std::vector<Triangle> Draw::delaunayTriangulation(std::vector<glm::vec3>& points
     for (size_t i = 0; i < points.size(); ++i) {
         pointIndexMap[points[i]] = i;
     }
-
+    int barWidth = 50;
+    int processedLines = 0;
+    int totalLines = points.size();
+    std::cout << "DELAUNEY TRIANGULATING.." << std::endl;
     for (size_t i = 0; i < points.size() - 3; ++i) {
         glm::vec3& p = points[i];
         std::vector<Edge> polygon;
@@ -1140,7 +1066,13 @@ std::vector<Triangle> Draw::delaunayTriangulation(std::vector<glm::vec3>& points
                 // Create the triangle using these indices
                 triangles.push_back({ index_v1, index_v2, i });
             }
+           
+           
+            
+            // Iterate through v and u to generate surface points
+      
         }
+       
     }
 
     // Step 5: Remove triangles connected to super-triangle vertices

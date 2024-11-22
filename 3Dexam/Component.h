@@ -40,7 +40,7 @@ public:
         velocity = newVelocity;
 
     }
-}; 
+};
 class AngularVelocityComponent : public Component {
 public:
     glm::vec3 angularvelocity; // velocity for the object, used for movement
@@ -68,14 +68,14 @@ class HealthComponent : public Component {
 public:
     float health; // health for the combat system
     HealthComponent(float hp = 100)
-        : health(hp){}
+        : health(hp) {}
 
 };
 class DamageComponent : public Component {
 public:
     float damage; // damage for the combat system
     DamageComponent(float dmg = 10.0f)
-        : damage(dmg){}
+        : damage(dmg) {}
 
 };
 class RenderComponent : public Component {
@@ -87,7 +87,7 @@ public:
     std::string shape; // Could be "cube", "plane", "sphere", "etc".
     std::vector<Vertex> vertices;
     Draw Draw; // class that houses all the rendering functions
-    RenderComponent(const glm::vec3& color, const glm::vec3& size, const std::string& shape, const glm::vec3& rotation = glm::vec3(0.0f,0.0f,0.0f))
+    RenderComponent(const glm::vec3& color, const glm::vec3& size, const std::string& shape, const glm::vec3& rotation = glm::vec3(0.0f, 0.0f, 0.0f))
         : color(color), size(size), shape(shape), rotation(rotation) {}
 };
 class CollisionComponent : public Component {
@@ -95,8 +95,8 @@ public:
     glm::vec3 size; // Can be added for custom collision box/sphere
     float radius;
     bool isColliding = false;
-    CollisionComponent(float sizex = 1.0f,float sizey = 1.0f, float sizez = 1.0f, float radius = 10.0f)
-        : size(glm::vec3(sizex,sizey,sizez)), radius(radius) {
+    CollisionComponent(float sizex = 1.0f, float sizey = 1.0f, float sizez = 1.0f, float radius = 10.0f)
+        : size(glm::vec3(sizex, sizey, sizez)), radius(radius) {
 
 
     }
@@ -105,9 +105,9 @@ public:
 class PhysicsComponet : public Component {
 public:
     float mass; // For physics objects
-    float gravity; 
+    float gravity;
     PhysicsComponet(float mass = 1.0f, float gravity = 9.81f) :
-     mass(mass), gravity(gravity)    {
+        mass(mass), gravity(gravity) {
 
 
     }
@@ -178,9 +178,27 @@ public:
         if (it != entityIDs.end()) {
             return positions[std::distance(entityIDs.begin(), it)];
         }
-        else {
-            
+
+    }
+    void RemovePositionByEntityID(int entityID) {
+        auto it = std::find(entityIDs.begin(), entityIDs.end(), entityID);
+        if (it != entityIDs.end()) {
+            // Find the index of the entityID
+            size_t index = std::distance(entityIDs.begin(), it);
+
+            // Remove the position and entityID at the found index
+            positions.erase(positions.begin() + index);
+            entityIDs.erase(entityIDs.begin() + index);
         }
+    }
+    bool HasEntity(int entityID) {
+        for (auto id : entityIDs) {
+            if (id == entityID) {
+                return true;
+            }
+
+        }
+        return false;
     }
 };
 
@@ -200,9 +218,22 @@ public:
         if (it != entityIDs.end()) {
             return velocities[std::distance(entityIDs.begin(), it)];
         }
-        else {
-           
+
+
+    }
+    void RemoveVelocityByEntityID(int entityID) {
+        auto it = std::find(entityIDs.begin(), entityIDs.end(), entityID);
+        if (it != entityIDs.end()) {
+            // Find the index of the entityID
+            size_t index = std::distance(entityIDs.begin(), it);
+
+            // Remove the position and entityID at the found index
+            velocities.erase(velocities.begin() + index);
+            entityIDs.erase(entityIDs.begin() + index);
         }
+    }
+    bool HasEntity(int entityID) {
+        return std::find(entityIDs.begin(), entityIDs.end(), entityID) != entityIDs.end();
     }
 };
 
@@ -222,8 +253,20 @@ public:
         if (it != entityIDs.end()) {
             return accelerations[std::distance(entityIDs.begin(), it)];
         }
-        else {
-           
+
+    }
+    void RemoveAccelerationByEntityID(int entityID) {
+        auto it = std::find(entityIDs.begin(), entityIDs.end(), entityID);
+        if (it != entityIDs.end()) {
+            // Find the index of the entityID
+            size_t index = std::distance(entityIDs.begin(), it);
+
+            // Remove the position and entityID at the found index
+            accelerations.erase(accelerations.begin(), accelerations.begin() + index);
+            entityIDs.erase(entityIDs.begin(), entityIDs.begin() + index);
         }
+    }
+    bool HasEntity(int entityID) {
+        return std::find(entityIDs.begin(), entityIDs.end(), entityID) != entityIDs.end();
     }
 };

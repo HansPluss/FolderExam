@@ -67,7 +67,7 @@ public:
 	//|									Public Functions							|
 	//|-----------------------------------------------------------------------------|		
 	void Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, PositionComponent& pos);
-	void RenderPoints(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj);
+	void RenderPoints(const std::shared_ptr<Shader>& shader, glm::mat4 viewproj, PositionComponent& pos);
 	glm::vec3 EvaluateBiquadratic(int my_u, int my_v, glm::vec3& bu, glm::vec3& bv, std::vector<std::vector<glm::vec3>> c, float t_u,float t_v);
 	void Update(float deltaTime, Grid* grid);
 	void ApplyForce(glm::vec3 force);
@@ -79,7 +79,7 @@ public:
 	void MakeBiquadraticSurface(const int n_u, const int n_v, int d_u, int d_v, std::vector<std::vector<glm::vec3>> c);
 	std::pair<glm::vec3, glm::vec3> B2(float tu, float tv, int my_u, int my_v);
 	int FindKnotInterval(const std::vector<float>& knots, int degree, int n, float t);
-	glm::vec3 deBoorSurface(int du, int dv, const std::vector<float>& knotsU, const std::vector<float>& knotsV, std::vector<glm::vec3> controlPoints, float u, float v, const int n_u, const int n_v);
+	glm::vec3 deBoorSurface(int du, int dv, const std::vector<float>& knotsU, const std::vector<float>& knotsV, std::vector<glm::vec3> controlPoints, float u, float v);
 	glm::vec3 deBoor(int k, int degree, const std::vector<float>& knots, std::vector<glm::vec3> controlPoints, float t);
 	std::vector<glm::vec3> ReadLazFile(const std::string& filePath);
 	std::vector<glm::vec3> Readfile(const char* filename);
@@ -148,11 +148,16 @@ private:
     //|								Biquadratic B-Spline								|
     //|-----------------------------------------------------------------------------|
 	
+	int n_u = 4; // controll points for u
+	int n_v = 3; // controll points for v
+	int d_u = 2;
+	int d_v = 2;
 	float hu = 0.1f, hv = 0.1f;
 	std::vector <float> mu; // vector u
 	std::vector <float> mv; // vector v
-	
+
 	std::vector<glm::vec3> mc; // controll points u direction
+	glm::vec3 c[4][3];
 	
 
 	//|-----------------------------------------------------------------------------|

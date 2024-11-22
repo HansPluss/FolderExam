@@ -53,14 +53,22 @@ void Collision::UpdateCollision(Grid* grid, float dt)
 bool Collision::SphereCollison(Entity& objA, Entity& objB, float DeltaTime)
 {
 	//float VelocityScale = 0.05f;
-	glm::vec3 posA = objA.GetComponent<PositionComponent>()->position + objA.GetComponent<VelocityComponent>()->velocity * DeltaTime;
-	glm::vec3 posB = objB.GetComponent<PositionComponent>()->position + objB.GetComponent<VelocityComponent>()->velocity * DeltaTime;
+	glm::vec3 posA = objA.GetComponent<PositionComponent>()->GetPosition() + objA.GetComponent<VelocityComponent>()->GetVelocity() * DeltaTime;
+	glm::vec3 posB = objB.GetComponent<PositionComponent>()->GetPosition() + objB.GetComponent<VelocityComponent>()->GetVelocity() * DeltaTime;
 	float distance_centers = glm::length(posA - posB);
+	float combinedRadii = objA.GetComponent<RenderComponent>()->size.x + objB.GetComponent<RenderComponent>()->size.x;
+	float offset = 0.1f;
+	if (distance_centers <= (combinedRadii + offset)) {
+		// Calculate the minimum translation distance to resolve the collision
+		float minimuntranslation = (combinedRadii + offset) - distance_centers;
 
-	if (distance_centers <= (objA.GetComponent<RenderComponent>()->size.x + objB.GetComponent<RenderComponent>()->size.x)) {
-		float minimuntranslation = objA.GetComponent<RenderComponent>()->size.x + objB.GetComponent<RenderComponent>()->size.x - distance_centers;
-		auto dirvec = glm::normalize(objA.GetComponent<PositionComponent>()->position - objB.GetComponent<PositionComponent>()->position);
-		objA.GetComponent<PositionComponent>()->position = (objA.GetComponent<PositionComponent>()->position + dirvec * minimuntranslation);
+		// Determine the direction vector between the two objects
+		auto dirvec = glm::normalize(posA - posB);
+
+		// Apply the translation to separate objA from objB
+		objA.GetComponent<PositionComponent>()->position += dirvec * minimuntranslation;
+
+		// Handle collision response
 		ObjectCollisionResponse(objA, objB);
 
 		return true;

@@ -2,10 +2,10 @@
 glm::vec3 RigidBody::CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal)
 {
     // Downward gravity force
-    
+
     slopeVector = glm::normalize(slopeVector);
-    
-    
+
+
     glm::vec3 gravityForce(0.0f, gravity, 0.0f);
 
     // Calculating normal force (perpendicular to the slope)
@@ -30,8 +30,9 @@ void RigidBody::ApplyForce(AccelerationComponent& aComponent, glm::vec3 force)
 void RigidBody::Update(PositionComponent& pComponent, VelocityComponent& vComponent, AccelerationComponent& aComponent, float deltaTime)
 {
     //updates the position of the entity
+    //std::cout << pComponent.GetPosition().x << std::endl;
     vComponent.velocity += aComponent.acceleration * deltaTime;
-    pComponent.position += vComponent.velocity * deltaTime;               
+    pComponent.position += vComponent.velocity * deltaTime;
     aComponent.acceleration = glm::vec3(0.0f, gravity, 0.0f);
 }
 
@@ -42,10 +43,13 @@ void RigidBody::DODUpdate(PositionStorage& storage, AccelerationStorage& aStorag
 
     // Adjust deltaTime for time scale
     float timeStep = deltaTime * timeScale;
-
     for (auto* entity : entityList) {
-        int entityID = entity->GetId();  // Assuming each entity has an ID
+        int entityID = entity->GetId();
 
+
+
+        if (entity->isMarkedForDeletion)
+            return;
         // Ensure the entity has all the necessary components
         if (entity->GetComponent<PositionComponent>() && entity->GetComponent<VelocityComponent>() && entity->GetComponent<AccelerationComponent>()) {
             // Update velocity using acceleration
@@ -54,7 +58,7 @@ void RigidBody::DODUpdate(PositionStorage& storage, AccelerationStorage& aStorag
 
             velocity += acceleration * timeStep;
 
-          
+
 
             // Update position using velocity
             glm::vec3& position = storage.GetPositionByEntityID(entityID);
@@ -64,7 +68,7 @@ void RigidBody::DODUpdate(PositionStorage& storage, AccelerationStorage& aStorag
             acceleration = glm::vec3(0.0f, gravity, 0.0f);
 
             // Apply friction (if on ground)
-            
+
 
             // Update storage
             storage.GetPositionByEntityID(entityID) = position;
@@ -72,9 +76,20 @@ void RigidBody::DODUpdate(PositionStorage& storage, AccelerationStorage& aStorag
             vStorage.GetVelocityByEntityID(entityID) = velocity;
 
             // Update the entity's PositionComponent
+
             entity->GetComponent<PositionComponent>()->position = position;
+            entity->GetComponent<AccelerationComponent>()->acceleration = acceleration;
+            entity->GetComponent<VelocityComponent>()->velocity = velocity;
         }
     }
+}
+
+void RigidBody::DODApplyForce(AccelerationStorage& aStorage, glm::vec3 force, int Id)
+{
+
+
+    aStorage.GetAccelerationByEntityID(Id) += force;
+    //std::cout << "Force: " << aStorage.GetAccelerationByEntityID(Id).x;
 }
 
 

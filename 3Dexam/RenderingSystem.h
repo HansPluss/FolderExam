@@ -57,10 +57,7 @@ public:
 
             // Calling the general render function
             renderComponent->Draw.Render(shader, viewproj, *positionComponent);
-            if (renderComponent->shape == "cube") {
-               // std::cout << "Marked" << std::endl;
-
-            }
+            
         }
           
         
@@ -72,7 +69,7 @@ public:
         if (positionComponent && renderComponent) {
 
             // Calling the general render function
-            renderComponent->Draw.RenderPoints(shader, viewproj);
+            renderComponent->Draw.RenderPoints(shader, viewproj, *positionComponent);
            
         }
 
