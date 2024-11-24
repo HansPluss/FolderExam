@@ -37,6 +37,9 @@ public:
             else if (renderComponent->shape == "pointcloud") {
                 renderComponent->Draw.DrawPoints(renderComponent->color, positionComponent->position, renderComponent->size);
             }
+            else if (renderComponent->shape == "bSpline") {
+                renderComponent->Draw.DrawBspline();
+            }
             else 
 			{
 				std::cout << "Shape not found" << std::endl;

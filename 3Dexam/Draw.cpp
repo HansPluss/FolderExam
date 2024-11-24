@@ -291,20 +291,40 @@ void Draw::DrawTerrain(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 {
     // Set the object's position and size
-    
+   
     //mc = controlpoints;
     // Initialize B-Spline parameters
   
 
     // Initialize knot vectors
-    mu.clear();
+   /* mu.clear();
     mu.push_back(0); mu.push_back(0); mu.push_back(0);
     mu.push_back(1);
     mu.push_back(2); mu.push_back(2); mu.push_back(2);
 
     mv.clear();
     mv.push_back(0); mv.push_back(0); mv.push_back(0);
-    mv.push_back(1); mv.push_back(1); mv.push_back(1);
+    mv.push_back(1); mv.push_back(1); mv.push_back(1);*/
+    for (int i = 0; i <= d_u; ++i) {
+        mu.push_back(0); // Start knots (degree + 1 times)
+    }
+    for (int i = 1; i <= n_u - d_u - 1; ++i) {
+        mu.push_back(static_cast<float>(i)); // Interior knots
+    }
+    for (int i = 0; i <= d_u; ++i) {
+        mu.push_back(static_cast<float>(n_u - d_u)); // End knots (degree + 1 times)
+    }
+
+    // Generate knot vector for v
+    for (int i = 0; i <= d_v; ++i) {
+        mv.push_back(0); // Start knots (degree + 1 times)
+    }
+    for (int i = 1; i <= n_v - d_v - 1; ++i) {
+        mv.push_back(static_cast<float>(i)); // Interior knots
+    }
+    for (int i = 0; i <= d_v; ++i) {
+        mv.push_back(static_cast<float>(n_v - d_v)); // End knots (degree + 1 times)
+    }
 
     // Debugging: Print the knot vectors
     std::cout << "Knot vector mu: ";
@@ -388,7 +408,7 @@ void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
         vertex.r = normalizedHeight;
         vertex.g = 1.0f - normalizedHeight;
         vertex.b = 0.5f * (1.0f - normalizedHeight);
-        if ((frictionOffset % 8 == 0) || (point.x > -5 && point.x < 5 && point.z > -5 && point.z < 5)) {
+        if ((frictionOffset % 8 == 0) || (point.x > -50 && point.x < 50 && point.z > -50 && point.z < 50)) {
             vertex.r = 0.0f;
             vertex.g = 0.0f;
             vertex.b = 1.0f;
@@ -445,6 +465,50 @@ void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
         vertex.normaly = normal.y;
         vertex.normalz = normal.z;
     }
+    this->Initalize();
+}
+
+void Draw::DrawBspline()
+{
+    mc.clear();
+    //mc.push_back(glm::vec3(0, 0, 0));
+    mc = controllPoints;
+   
+    n_u = controllPoints.size();
+    n_v = controllPoints.size();
+   
+    d_v = 1;
+    d_u = 1;
+    mu.clear();
+    mv.clear();
+    for (int i = 0; i <= d_u; ++i) {
+        mu.push_back(0); // Start knots (degree + 1 times)
+    }
+    for (int i = 1; i <= n_u - d_u - 1; ++i) {
+        mu.push_back(static_cast<float>(i)); // Interior knots
+    }
+    for (int i = 0; i <= d_u; ++i) {
+        mu.push_back(static_cast<float>(n_u - d_u)); // End knots (degree + 1 times)
+    }
+
+    // Generate knot vector for v
+    for (int i = 0; i <= d_v; ++i) {
+        mv.push_back(0); // Start knots (degree + 1 times)
+    }
+    for (int i = 1; i <= n_v - d_v - 1; ++i) {
+        mv.push_back(static_cast<float>(i)); // Interior knots
+    }
+    for (int i = 0; i <= d_v; ++i) {
+        mv.push_back(static_cast<float>(n_v - d_v)); // End knots (degree + 1 times)
+    }
+    std::vector<std::vector<glm::vec3>> c(n_u, std::vector<glm::vec3>(n_v));
+    for (int i = 0; i < n_u; ++i) {
+        for (int j = 0; j < n_v; ++j) {
+            c[i][j] = mc[j * n_u + i]; // Correct mapping
+        }
+    }
+    MakeBiquadraticLine(n_u, d_u, 0,c);
+
     this->Initalize();
 }
 
@@ -510,22 +574,29 @@ void Draw::InitalizePoints()
 void Draw::Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, PositionComponent& pos)
 {
     glm::mat4 model2 = glm::mat4(1.0f);
-
-    //glm::quat quaterninon = glm::quat(0.0, 0.0, 0.0, 0.0);
-    //glm::mat4 rotationMatrix = glm::mat4_cast(quaterninon);
-    rotation = glm::mat4_cast(Quaternion);
+    
     model2 = glm::translate(model2, pos.position);
     model2 = glm::scale(model2, objSize);
-    model2 *= rotation;
-   
+
+    // Get the uniform location
+    GLint camMatrixLocation = glGetUniformLocation(Shader->ID, "camMatrix");
+    if (camMatrixLocation != -1) {
+        glUniformMatrix4fv(camMatrixLocation, 1, GL_FALSE, glm::value_ptr(viewproj * model2));
+    }
+    else {
+        // Handle the error appropriately (e.g., log it)
+        std::cerr << "Error: 'camMatrix' uniform not found in shader!" << std::endl;
+    }
+
     VAO.Bind();
     VBO.Bind();
     EBO1.Bind();
-
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-   
-    // glDrawArrays(GL_POINT, 0, vertices.size());
-     //unbind
+    //glLineWidth(20.0f);
+    // Adjust point size as needed
+    glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0); // Use GL_POINTS instead of GL_POINT
+    //glDrawArrays(GL_POINTS, 0, vertices.size());
+   // glPointSize(1.0f);
+    // Unbind
     VAO.Unbind();
     VBO.Unbind();
     EBO1.Unbind();
@@ -536,7 +607,12 @@ void Draw::Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, Pos
 void Draw::RenderPoints(const std::shared_ptr<Shader>& shader, glm::mat4 viewproj, PositionComponent& pos)
 {
     glm::mat4 model2 = glm::mat4(1.0f);
+    if (bHasBsplineFollow) {
+        //std::cout << pos.GetPosition().x << std::endl;
+        
+        
 
+    }
     model2 = glm::translate(model2, pos.position);
     model2 = glm::scale(model2, objSize);
 
@@ -586,7 +662,8 @@ void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, s
     float h = 0.1f; // Spacing
     int nu = static_cast<int>((mu[n_u] - mu[d_u]) / h);  // Calculate the number of steps in u
     int nv = static_cast<int>((mv[n_v] - mv[d_v]) / h);  // Calculate the number of steps in v
-
+    indices.clear();
+    vertices.clear();
     // Iterate through v and u to generate surface points
     for (int i = 0; i < nv; ++i)
     {
@@ -596,12 +673,12 @@ void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, s
             float v = i * h;
 
             // Find the corresponding knot intervals for u and v
-            //int my_u = FindKnotInterval(mu, d_u, n_u, u);
-            //int my_v = FindKnotInterval(mv, d_v, n_v, v);
+            int my_u = FindKnotInterval(mu, d_u, n_u, u);
+            int my_v = FindKnotInterval(mv, d_v, n_v, v);
 
             // Calculate the basis function coefficients for the current u and v
-            //auto koeff_par = B2(u, v, my_u, my_v);
-
+            auto koeff_par = B2(u, v, my_u, my_v);
+            //glm::vec3 surfacePoint = EvaluateBiquadratic(my_u,my_u,);
             // Evaluate the biquadratic surface at the current u and v
             glm::vec3 surfacePoint = deBoorSurface(d_u, d_v, mu, mv, mc, u, v);
 
@@ -647,6 +724,59 @@ void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, s
             indices.push_back(idx4);
             indices.push_back(idx3);
         }
+    }
+}
+void Draw::MakeBiquadraticLine(const int n_u, int d_u, float v, std::vector<std::vector<glm::vec3>> c) {
+    float h = 0.1f; // Spacing between points
+    vertices.clear();
+    indices.clear();
+
+    float u_min = mu[d_u];
+    float u_max = mu[n_u];
+
+    int nu = static_cast<int>((u_max - u_min) / h); // Number of steps in u
+
+    // Iterate through u to generate line points
+    for (int j = 0; j < nu; ++j) {
+        float u = u_min + j * h;
+
+        // Find the corresponding knot interval for u
+        int my_u = FindKnotInterval(mu, d_u, n_u, u);
+
+        // Fixed v interval
+        int my_v = FindKnotInterval(mv, d_u, n_u, v);
+
+        // Evaluate the biquadratic curve at the current u (for the fixed v)
+        glm::vec3 linePoint = deBoorSurface(d_u, d_u, mu, mv,mc, u, v);
+
+        Vertex vertex;
+
+        // Assign position from the evaluated point
+        vertex.x = linePoint.x;
+        vertex.y = linePoint.y;
+        vertex.z = linePoint.z;
+
+        // Assign color and texture coordinates
+        vertex.r = 1.0f;
+        vertex.g = 1.0f;
+        vertex.b = 1.0f;
+
+        vertex.u = static_cast<float>(j) / (nu - 1); // Normalize along u
+        vertex.v = 0.0f; // Single value since this is a line
+
+        vertex.normalx = 0.0f;
+        vertex.normaly = 1.0f;
+        vertex.normalz = 0.0f;
+
+        // Push the computed line point into the vertices array
+        vertices.push_back(vertex);
+    }
+
+    // Generate indices for the line
+    for (int j = 0; j < nu - 1; ++j) {
+        indices.push_back(j);
+        indices.push_back(j + 1);
+        
     }
 }
 
@@ -1178,6 +1308,12 @@ std::vector<float> Draw::CreateClampedKnotVector(int numControlPoints, int degre
     }
 
     return knotVector;
+}
+
+void Draw::UpdateBSpline(glm::vec3 pos)
+{
+    controllPoints.push_back(pos);
+    DrawBspline();
 }
 
 

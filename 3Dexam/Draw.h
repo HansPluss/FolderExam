@@ -62,6 +62,7 @@ public:
 	void DrawTerrain(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
 	void DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
 	void DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
+	void DrawBspline();
 
 	//|-----------------------------------------------------------------------------|
 	//|									Public Functions							|
@@ -77,6 +78,8 @@ public:
 	void CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal);
 	void FollowPlayer(Draw& ball, float speed);
 	void MakeBiquadraticSurface(const int n_u, const int n_v, int d_u, int d_v, std::vector<std::vector<glm::vec3>> c);
+	void MakeBiquadraticLine(const int n_u, int d_u, float v, std::vector<std::vector<glm::vec3>> c);
+
 	std::pair<glm::vec3, glm::vec3> B2(float tu, float tv, int my_u, int my_v);
 	int FindKnotInterval(const std::vector<float>& knots, int degree, int n, float t);
 	glm::vec3 deBoorSurface(int du, int dv, const std::vector<float>& knotsU, const std::vector<float>& knotsV, std::vector<glm::vec3> controlPoints, float u, float v);
@@ -87,6 +90,7 @@ public:
 	std::vector<Triangle> delaunayTriangulation(std::vector<glm::vec3>& points);
 	std::vector<glm::vec3> CalculateBaryCentricCoordinates(std::vector<unsigned int> indices,std::vector<Vertex> vertecies);
 	std::vector<float> CreateClampedKnotVector(int numControlPoints, int degree);
+	void UpdateBSpline(glm::vec3 pos);
 	//|-----------------------------------------------------------------------------|
 	//|									Getters										|
 	//|-----------------------------------------------------------------------------|
@@ -118,7 +122,9 @@ public:
 	Cell* ownerCell = nullptr; 
 	// Current position in the cell-vector
 	int cellvectorindex = -1; 
-
+	bool bHasBsplineFollow = false;
+	int DrawDelay;
+	std::vector<glm::vec3> controllPoints;
 private:
 	//|-----------------------------------------------------------------------------|
 	//|								Private Functions								|

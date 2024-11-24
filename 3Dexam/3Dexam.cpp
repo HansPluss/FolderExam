@@ -124,6 +124,7 @@ int main()
     Entity ballObject;
     ballObject.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
     ballObject.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
+    ballObject.GetComponent<RenderComponent>()->Draw.bHasBsplineFollow = true;
     ballObject.AddComponent<VelocityComponent>();
     ballObject.AddComponent<AccelerationComponent>(10);
     ballObject.AddComponent<PhysicsComponet>();
@@ -138,6 +139,10 @@ int main()
     splinesurface.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
     splinesurface.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinesurface");
 
+    Entity bSpline;
+    bSpline.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
+    bSpline.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bSpline");
+
     Entity pointCloud;
     pointCloud.AddComponent<PositionComponent>(0.0f,0.0f,0.0f);
     pointCloud.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "pointcloud");
@@ -150,6 +155,7 @@ int main()
 
     renderSystem->initalize(pointCloud);
     renderSystem->initalize(ballObject);
+    renderSystem->initalize(bSpline);
    
     int cellSize = 8;
     int gridSizeX = 1000;
@@ -163,6 +169,7 @@ int main()
     myEntities.push_back(&ballObject);
     myEntities.push_back(&ballObject_2);
     myEntities.push_back(&splinesurface);
+   // myEntities.push_back(&bSpline);
    
 
     //Add all components to storage for batch proccesing
@@ -227,7 +234,7 @@ int main()
 
     std::shared_ptr<Collision> collision = std::make_shared<Collision>();
     int num = 0;
-
+    int LineUpdateTick = 0;
     // ---------------------------------------------------------------------------------------------------------------------------
     //                                                        Main Loop
     // ---------------------------------------------------------------------------------------------------------------------------
@@ -255,9 +262,14 @@ int main()
         //pointcloud 
         glBindTexture(GL_TEXTURE_2D, green.texture);
         renderSystem->RenderPoints(pointCloud, shaderProgram, viewproj);
-        
+        renderSystem->Render(bSpline, shaderProgram, viewproj);
         collision->UpdateCollision(m_grid.get(), dt);
        
+        LineUpdateTick++;
+        if (LineUpdateTick % 50 == 0) {
+            std::cout << "updated " << std::endl;
+            bSpline.GetComponent<RenderComponent>()->Draw.UpdateBSpline(ballObject.GetComponent<PositionComponent>()->GetPosition());
+        }
         for (int i = 0; i < myEntities.size(); ++i) {
 
             if (myEntities[i]->GetComponent<RenderComponent>()->shape == "bsplinesurface") {
