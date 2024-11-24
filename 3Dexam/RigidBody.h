@@ -13,7 +13,7 @@ private:
 	glm::vec3 position;
 public:
 
-	glm::vec3 CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal);
+	glm::vec3 CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal, float fricition);
 	void ApplyForce(AccelerationComponent& aComponent, glm::vec3 force);
 	void Update(PositionComponent& position, VelocityComponent& velocity, AccelerationComponent& acceleration, float deltaTime);
 	void DODUpdate(PositionStorage& storage, AccelerationStorage& aStorage, VelocityStorage& vStorage, std::vector<Entity*>& entityList, float deltatime);

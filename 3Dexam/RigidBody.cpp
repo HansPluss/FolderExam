@@ -1,5 +1,5 @@
 #include "RigidBody.h"
-glm::vec3 RigidBody::CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal)
+glm::vec3 RigidBody::CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal, float friction)
 {
     // Downward gravity force
 
@@ -17,7 +17,8 @@ glm::vec3 RigidBody::CalculateGravity(float inclineAngle, glm::vec3 slopeVector,
 
     // Projecting this parallel gravity onto the slope's horizontal direction (slopeVector)
     glm::vec3 gravityAlongSlope = glm::dot(gravityParallel, slopeVector) * slopeVector;
-
+    glm::vec3 frictionForce = gravityAlongSlope * -friction;
+    gravityAlongSlope += frictionForce;
     // Applying the force along the slope
     return gravityAlongSlope;
 }

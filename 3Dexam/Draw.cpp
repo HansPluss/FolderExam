@@ -373,7 +373,10 @@ void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 
     // Create vertices
     vertices.clear();
+    int frictionOffset = 3;
     for (const auto& point : pointCloud) {
+        frictionOffset += 3;
+        
         Vertex vertex;
         vertex.x = point.x;
         vertex.y = point.y;
@@ -385,7 +388,15 @@ void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
         vertex.r = normalizedHeight;
         vertex.g = 1.0f - normalizedHeight;
         vertex.b = 0.5f * (1.0f - normalizedHeight);
-
+        if ((frictionOffset % 8 == 0) || (point.x > -5 && point.x < 5 && point.z > -5 && point.z < 5)) {
+            vertex.r = 0.0f;
+            vertex.g = 0.0f;
+            vertex.b = 1.0f;
+            vertex.friction = 0.9;
+        }
+        else {
+            vertex.friction = 0.1;
+        }
         vertex.normalx = 0.0f; // Initialize normal to zero
         vertex.normaly = 0.0f;
         vertex.normalz = 0.0f;

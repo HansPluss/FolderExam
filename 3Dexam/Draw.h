@@ -35,7 +35,7 @@ struct Vertex
 	float r, g, b;
 	float u, v;
 	float normalx, normaly, normalz;
-
+	float friction;
 
 };
 struct Triangle {

@@ -75,8 +75,10 @@ void CollisionSystem::BarycentricCoordinates(Entity& ballEntity, Entity& planeEn
             double height = v0.y * u + v1.y * v + v2.y * w;
             // Adjusting position and velocity if ball is near the ground
             glm::vec3 currentVelocity = velocityComponent->velocity;
-
-
+            float frictionCoefficient = (planeVertices[index0].friction +
+                planeVertices[index1].friction +
+                planeVertices[index2].friction) / 3.0f;
+           
 
             if (positionComponent->position.y < height + groundThreshold) {
                 // Stopping downward motion and applying corrective force
@@ -122,13 +124,17 @@ void CollisionSystem::BarycentricCoordinates(Entity& ballEntity, Entity& planeEn
                         currentVelocity.y = 0; // Stopping downward motion
                     }
                 }
+               
 
+              
+                // Update the velocity component
                 velocityComponent->velocity = currentVelocity;
 
+                //std::cout << "Friction: " << frictionForce.x << ", " << frictionForce.y << ", " << frictionForce.z << std::endl;
 
                 // Calculating gravity effect along the slope and apply force
                 if (glm::length(slopeVector) > 0.00000001f) {
-                    glm::vec3 gravityAlongSlope = physicsSystem->CalculateGravity(inclineAngle, slopeVector, normal);
+                    glm::vec3 gravityAlongSlope = physicsSystem->CalculateGravity(inclineAngle, slopeVector, normal, frictionCoefficient);
                     physicsSystem->ApplyForce(ballEntity, gravityAlongSlope);
                 }
 
@@ -259,7 +265,7 @@ void CollisionSystem::DODBarycentric(PositionStorage& storage, AccelerationStora
 
                     // Calculating gravity effect along the slope and apply force
                     if (glm::length(slopeVector) > 0.00000001f) {
-                        glm::vec3 gravityAlongSlope = physicsSystem->CalculateGravity(inclineAngle, slopeVector, normal);
+                        glm::vec3 gravityAlongSlope = physicsSystem->CalculateGravity(inclineAngle, slopeVector, normal, 1.0f);
                         physicsSystem->ApplyForce(*entityList[entityID], gravityAlongSlope);
                     }
 

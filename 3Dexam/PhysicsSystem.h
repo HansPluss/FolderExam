@@ -41,10 +41,10 @@ public:
 		//rigidBody.DODApplyForce(aStorage, force, Id);
 
 	}
-	glm::vec3 CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal) {
+	glm::vec3 CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal, float friciton) {
 
 
-		return rigidBody.CalculateGravity(inclineAngle, slopeVector, normal);
+		return rigidBody.CalculateGravity(inclineAngle, slopeVector, normal, friciton);
 	}
 
 };
