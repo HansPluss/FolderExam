@@ -1310,8 +1310,9 @@ std::vector<float> Draw::CreateClampedKnotVector(int numControlPoints, int degre
     return knotVector;
 }
 
-void Draw::UpdateBSpline(glm::vec3 pos)
+void Draw::UpdateBSpline(glm::vec3 pos, glm::vec3 velocity)
 {
+    pos += velocity;
     controllPoints.push_back(pos);
     DrawBspline();
 }

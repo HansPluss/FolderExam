@@ -268,7 +268,7 @@ int main()
         LineUpdateTick++;
         if (LineUpdateTick % 50 == 0) {
             std::cout << "updated " << std::endl;
-            bSpline.GetComponent<RenderComponent>()->Draw.UpdateBSpline(ballObject.GetComponent<PositionComponent>()->GetPosition());
+            bSpline.GetComponent<RenderComponent>()->Draw.UpdateBSpline(ballObject.GetComponent<PositionComponent>()->GetPosition(),ballObject.GetComponent<VelocityComponent>()->GetVelocity());
         }
         for (int i = 0; i < myEntities.size(); ++i) {
 

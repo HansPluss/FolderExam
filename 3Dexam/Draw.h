@@ -90,7 +90,7 @@ public:
 	std::vector<Triangle> delaunayTriangulation(std::vector<glm::vec3>& points);
 	std::vector<glm::vec3> CalculateBaryCentricCoordinates(std::vector<unsigned int> indices,std::vector<Vertex> vertecies);
 	std::vector<float> CreateClampedKnotVector(int numControlPoints, int degree);
-	void UpdateBSpline(glm::vec3 pos);
+	void UpdateBSpline(glm::vec3 pos, glm::vec3 velocity);
 	//|-----------------------------------------------------------------------------|
 	//|									Getters										|
 	//|-----------------------------------------------------------------------------|
