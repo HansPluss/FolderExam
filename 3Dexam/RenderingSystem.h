@@ -40,6 +40,9 @@ public:
             else if (renderComponent->shape == "bSpline") {
                 renderComponent->Draw.DrawBspline();
             }
+            else if (renderComponent->shape == "bsplinepointsurface") {
+                renderComponent->Draw.DrawBSplinePointCloudSurface(renderComponent->color, positionComponent->position, renderComponent->size);
+            }
             else 
 			{
 				std::cout << "Shape not found" << std::endl;

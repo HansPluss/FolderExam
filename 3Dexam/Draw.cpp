@@ -290,21 +290,7 @@ void Draw::DrawTerrain(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 
 void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 {
-    // Set the object's position and size
    
-    //mc = controlpoints;
-    // Initialize B-Spline parameters
-  
-
-    // Initialize knot vectors
-   /* mu.clear();
-    mu.push_back(0); mu.push_back(0); mu.push_back(0);
-    mu.push_back(1);
-    mu.push_back(2); mu.push_back(2); mu.push_back(2);
-
-    mv.clear();
-    mv.push_back(0); mv.push_back(0); mv.push_back(0);
-    mv.push_back(1); mv.push_back(1); mv.push_back(1);*/
     for (int i = 0; i <= d_u; ++i) {
         mu.push_back(0); // Start knots (degree + 1 times)
     }
@@ -341,20 +327,20 @@ void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
    
 
     
-    mc.push_back(glm::vec3(0, 0, 0));  // (x, z, y) -> (x, y, z)
+    mc.push_back(glm::vec3(0, 0, 0)); 
     mc.push_back(glm::vec3(1, 0, 0));
     mc.push_back(glm::vec3(2, 0, 0));
     mc.push_back(glm::vec3(3, 0, 0));
 
-    mc.push_back(glm::vec3(0, 0, 1));  // Previously (0, 1, 0), now (0, 0, 1)
-    mc.push_back(glm::vec3(1, 2, 1));  // Previously (1, 1, 1), remains same
+    mc.push_back(glm::vec3(0, 0, 1)); 
+    mc.push_back(glm::vec3(1, 2, 1)); 
     mc.push_back(glm::vec3(2, 2, 1));
-    mc.push_back(glm::vec3(3, 0, 1));  // Previously (3, 1, 0), now (3, 0, 1)
+    mc.push_back(glm::vec3(3, 0, 1)); 
 
-    mc.push_back(glm::vec3(0, 0, 2));  // Previously (0, 2, 0), now (0, 0, 2)
-    mc.push_back(glm::vec3(1, 0, 2));  // Previously (1, 2, 1), now (1, 1, 2)
+    mc.push_back(glm::vec3(0, 0, 2)); 
+    mc.push_back(glm::vec3(1, 0, 2)); 
     mc.push_back(glm::vec3(2, 0, 2));
-    mc.push_back(glm::vec3(3, 0, 2));  // Previously (3, 2, 0), now (3, 0, 2)
+    mc.push_back(glm::vec3(3, 0, 2)); 
     // Map the flat control point array mc to the 2D grid c
     std::vector<std::vector<glm::vec3>> c(n_u, std::vector<glm::vec3>(n_v));
     for (int i = 0; i < n_u; ++i) {
@@ -473,12 +459,51 @@ void Draw::DrawBspline()
     mc.clear();
     //mc.push_back(glm::vec3(0, 0, 0));
     mc = controllPoints;
+    if (mc.size() <= 0) {
+        return;
+    }
    
     n_u = controllPoints.size();
-    n_v = controllPoints.size();
-   
-    d_v = 1;
+    n_v = (controllPoints.size());
+    if (n_u > controllPoints.size()) {
+        return;
+    }
+    d_v = 0;
     d_u = 1;
+    mu.clear();
+    mv.clear();
+    for (int i = 0; i <= d_u; ++i) {
+        mu.push_back(0); // Start knots (degree + 1 times)
+    }
+    for (int i = 1; i <= n_u - d_u - 1; ++i) {
+        mu.push_back(static_cast<float>(i)); // Interior knots
+    }
+    for (int i = 0; i <= d_u; ++i) {
+        mu.push_back(static_cast<float>(n_u - d_u)); // End knots (degree + 1 times)
+    }
+
+  
+   
+    std::vector<std::vector<glm::vec3>> c1(n_u, std::vector<glm::vec3>(n_v));
+   
+    
+    MakeBiquadraticLine(n_u, d_u, 0,c1);
+
+    this->Initalize();
+}
+
+void Draw::DrawBSplinePointCloudSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
+{
+    mc.clear();
+    const char* file = "32-2-516-156-31.txt";
+    std::vector<glm::vec3> pointCloud = Readfile(file);
+   
+    mc = pointCloud;
+   
+    n_u = sqrt(pointCloud.size());
+    n_v = sqrt(pointCloud.size());
+    d_v = 3;
+    d_u = 3;
     mu.clear();
     mv.clear();
     for (int i = 0; i <= d_u; ++i) {
@@ -501,13 +526,22 @@ void Draw::DrawBspline()
     for (int i = 0; i <= d_v; ++i) {
         mv.push_back(static_cast<float>(n_v - d_v)); // End knots (degree + 1 times)
     }
-    std::vector<std::vector<glm::vec3>> c(n_u, std::vector<glm::vec3>(n_v));
+
+    std::cout << "Knot vector mu: ";
+    for (float u : mu) std::cout << u << " ";
+    std::cout << std::endl;
+
+    std::cout << "Knot vector mv: ";
+    for (float v : mv) std::cout << v << " ";
+    std::cout << std::endl;
+    std::vector<std::vector<glm::vec3>> c1(n_u, std::vector<glm::vec3>(n_v));
+    
     for (int i = 0; i < n_u; ++i) {
         for (int j = 0; j < n_v; ++j) {
-            c[i][j] = mc[j * n_u + i]; // Correct mapping
+            c1[i][j] = mc[j * n_u + i]; // Correct mapping
         }
     }
-    MakeBiquadraticLine(n_u, d_u, 0,c);
+    MakeBiquadraticLine(n_u, d_u, 0, c1);
 
     this->Initalize();
 }
@@ -640,23 +674,7 @@ void Draw::RenderPoints(const std::shared_ptr<Shader>& shader, glm::mat4 viewpro
 }
 
 
-glm::vec3 Draw::EvaluateBiquadratic(int my_u, int my_v, glm::vec3& bu,glm::vec3& bv, std::vector<std::vector<glm::vec3>> c, float t_u, float t_v)
-{
-    glm::vec3 surfacePoint = glm::vec3(0.0f);
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            if ((my_u - i) >= 0 && (my_u - i) < c.size() &&
-                (my_v - j) >= 0 && (my_v - j) < c[0].size()) {
 
-                float bu = EvaluateBiquadraticBasis(my_u - i, 2, t_u, mu);
-                float bv = EvaluateBiquadraticBasis(my_v - j, 2, t_v, mv);
-                glm::vec3 controlPoint = c[my_u - i][my_v - j];
-                surfacePoint += bu * bv * controlPoint;
-            }
-        }
-    }
-    return surfacePoint;
-}
 void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, std::vector<std::vector<glm::vec3>> c)
 {
     float h = 0.1f; // Spacing
@@ -672,13 +690,6 @@ void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, s
             float u = j * h;
             float v = i * h;
 
-            // Find the corresponding knot intervals for u and v
-            int my_u = FindKnotInterval(mu, d_u, n_u, u);
-            int my_v = FindKnotInterval(mv, d_v, n_v, v);
-
-            // Calculate the basis function coefficients for the current u and v
-            auto koeff_par = B2(u, v, my_u, my_v);
-            //glm::vec3 surfacePoint = EvaluateBiquadratic(my_u,my_u,);
             // Evaluate the biquadratic surface at the current u and v
             glm::vec3 surfacePoint = deBoorSurface(d_u, d_v, mu, mv, mc, u, v);
 
@@ -733,7 +744,7 @@ void Draw::MakeBiquadraticLine(const int n_u, int d_u, float v, std::vector<std:
 
     float u_min = mu[d_u];
     float u_max = mu[n_u];
-
+    
     int nu = static_cast<int>((u_max - u_min) / h); // Number of steps in u
 
     // Iterate through u to generate line points
@@ -741,13 +752,13 @@ void Draw::MakeBiquadraticLine(const int n_u, int d_u, float v, std::vector<std:
         float u = u_min + j * h;
 
         // Find the corresponding knot interval for u
-        int my_u = FindKnotInterval(mu, d_u, n_u, u);
+        //int my_u = FindKnotInterval(mu, d_u, n_u, u);
 
         // Fixed v interval
-        int my_v = FindKnotInterval(mv, d_u, n_u, v);
+        //int my_v = FindKnotInterval(mv, d_u, n_u, v);
 
         // Evaluate the biquadratic curve at the current u (for the fixed v)
-        glm::vec3 linePoint = deBoorSurface(d_u, d_u, mu, mv,mc, u, v);
+        glm::vec3 linePoint = deBoor(d_u, d_u,mu,controllPoints,u);
 
         Vertex vertex;
 
@@ -888,25 +899,6 @@ glm::vec3 Draw::GetSize()
     return objSize;
 }
 
-float Draw::EvaluateBiquadraticBasis(int i, int degree, float t, const std::vector<float>& knotVector)
-{
-    if (degree == 0) {
-        return (knotVector[i] <= t && t < knotVector[i + 1]) ? 1.0f : 0.0f;
-    }
-
-    float left = 0.0f, right = 0.0f;
-
-    if (knotVector[i + degree] != knotVector[i]) {
-        left = (t - knotVector[i]) / (knotVector[i + degree] - knotVector[i]) *
-            EvaluateBiquadraticBasis(i, degree - 1, t, knotVector);
-    }
-    if (knotVector[i + degree + 1] != knotVector[i + 1]) {
-        right = (knotVector[i + degree + 1] - t) / (knotVector[i + degree + 1] - knotVector[i + 1]) *
-            EvaluateBiquadraticBasis(i + 1, degree - 1, t, knotVector);
-    }
-
-    return left + right;
-}
 
 void Draw::SetPosition(glm::vec3 newPos)
 {
@@ -1058,7 +1050,7 @@ std::vector<glm::vec3> Draw::Readfile(const char* fileName)
         int pointSkip = 0;
         while (inputFile >> point.x >> comma >> point.z >> comma >> point.y) {
             pointSkip++;
-            if (pointSkip % 1000 == 0) {
+            if (pointSkip % 5000 == 0) {
                 point.x -= 608016.02;
                 point.y -= 336.8007;
                 point.z -= 6750620.771;
@@ -1102,7 +1094,7 @@ bool Draw::isPointInCircumcircle(glm::vec3& p, glm::vec3& p1, glm::vec3& p2, glm
 
     // Determinant for circumcircle test
     double det = ax * (bz * C - B * cz) - az * (bx * C - B * cx) + A * (bx * cz - bz * cx);
-    //std::cout << "Radius " << det << std::endl;
+   
     // If determinant is positive, point `p` is inside the circumcircle of p1, p2, p3
     return det > 0.0;
 
@@ -1312,8 +1304,11 @@ std::vector<float> Draw::CreateClampedKnotVector(int numControlPoints, int degre
 
 void Draw::UpdateBSpline(glm::vec3 pos, glm::vec3 velocity)
 {
+    
     pos += velocity;
+    
     controllPoints.push_back(pos);
+
     DrawBspline();
 }
 

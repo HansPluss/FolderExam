@@ -17,6 +17,8 @@
 #include "Entity.h"
 #include "Player.h"
 #include "Component.h"
+#include "BallObject.h"
+#include "BSpline.h"
 
 
 
@@ -143,6 +145,10 @@ int main()
     bSpline.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
     bSpline.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bSpline");
 
+    Entity bSplinePointSurface;
+    bSplinePointSurface.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
+    bSplinePointSurface.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinepointsurface");
+
     Entity pointCloud;
     pointCloud.AddComponent<PositionComponent>(0.0f,0.0f,0.0f);
     pointCloud.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "pointcloud");
@@ -169,6 +175,7 @@ int main()
     myEntities.push_back(&ballObject);
     myEntities.push_back(&ballObject_2);
     myEntities.push_back(&splinesurface);
+    //myEntities.push_back(&bSplinePointSurface);
    // myEntities.push_back(&bSpline);
    
 
@@ -265,10 +272,37 @@ int main()
         renderSystem->Render(bSpline, shaderProgram, viewproj);
         collision->UpdateCollision(m_grid.get(), dt);
        
-        LineUpdateTick++;
+
+        if (spawnObj) {
+            float randomX = static_cast<float>(std::rand() % 50) - 50.0f;
+            float randomZ = static_cast<float>(std::rand() % 50) - 50.0f;
+            BallObject& ball = manager->CreateEntityDerivedFromClass<BallObject>();
+            BSpline& spline = manager->CreateEntityDerivedFromClass<BSpline>();
+            physicsSystem->ApplyForce(ball, glm::vec3(randomX, 0, randomZ));
+            ball.attachedSpline = &spline;
+            spline.attachedBall = &ball;
+            spline.GetComponent<PositionComponent>()->position = ball.GetComponent<PositionComponent>()->GetPosition();
+            renderSystem->initalize(ball);
+            renderSystem->initalize(spline);
+            myEntities.push_back(&ball);
+            myEntities.push_back(&spline);
+            spawnObj = false;
+        }
+
+        LineUpdateTick += 1;
+       
         if (LineUpdateTick % 50 == 0) {
-            std::cout << "updated " << std::endl;
-            bSpline.GetComponent<RenderComponent>()->Draw.UpdateBSpline(ballObject.GetComponent<PositionComponent>()->GetPosition(),ballObject.GetComponent<VelocityComponent>()->GetVelocity());
+           // std::cout << "D" << std::endl;
+            for (auto* entity : myEntities) {
+                if (BallObject* ball = dynamic_cast<BallObject*>(entity)) {
+                    if (ball->attachedSpline) {
+                        glm::vec3 ballPos = ball->GetComponent<PositionComponent>()->GetPosition();
+                        glm::vec3 ballVel = ball->GetComponent<VelocityComponent>()->GetVelocity();
+                        //ball->attachedSpline->GetComponent<PositionComponent>()->position = ball->GetComponent<PositionComponent>()->GetPosition();
+                        ball->attachedSpline->GetComponent<RenderComponent>()->Draw.UpdateBSpline(ballPos, ballVel);
+                    }
+                }
+            }
         }
         for (int i = 0; i < myEntities.size(); ++i) {
 
@@ -326,6 +360,7 @@ void processInput(GLFWwindow* window)
         if (!isEKeyPressed) {
             spawnObj = true;
         }
+       
         isEKeyPressed = true;
     }
     else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {   

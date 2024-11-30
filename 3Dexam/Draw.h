@@ -63,13 +63,14 @@ public:
 	void DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
 	void DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
 	void DrawBspline();
+	void DrawBSplinePointCloudSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
 
 	//|-----------------------------------------------------------------------------|
 	//|									Public Functions							|
 	//|-----------------------------------------------------------------------------|		
 	void Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, PositionComponent& pos);
 	void RenderPoints(const std::shared_ptr<Shader>& shader, glm::mat4 viewproj, PositionComponent& pos);
-	glm::vec3 EvaluateBiquadratic(int my_u, int my_v, glm::vec3& bu, glm::vec3& bv, std::vector<std::vector<glm::vec3>> c, float t_u,float t_v);
+	
 	void Update(float deltaTime, Grid* grid);
 	void ApplyForce(glm::vec3 force);
 	void MoveXdir();
@@ -103,7 +104,7 @@ public:
 	std::vector<Vertex> GetVertices() { return vertices; };
 	std::vector<unsigned int> GetIndices() { return indices; };
 	float GetGravity() { return gravity; };
-	float EvaluateBiquadraticBasis(int i, int degree, float t, const std::vector<float>& knotVector);
+	
 
 	//|-----------------------------------------------------------------------------|
 	//|									Setters										|
@@ -153,7 +154,8 @@ private:
 	//|-----------------------------------------------------------------------------|
     //|								Biquadratic B-Spline								|
     //|-----------------------------------------------------------------------------|
-	
+public:
+
 	int n_u = 4; // controll points for u
 	int n_v = 3; // controll points for v
 	int d_u = 2;
