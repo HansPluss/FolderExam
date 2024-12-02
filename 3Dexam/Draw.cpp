@@ -520,7 +520,7 @@ void Draw::DrawBspline()
     std::vector<std::vector<glm::vec3>> c1(n_u, std::vector<glm::vec3>(n_v));
    
     
-    MakeBiquadraticLine(n_u, d_u, 0,c1);
+    MakeLinearLine(n_u, d_u, 0,c1);
 
     this->Initalize();
 }
@@ -574,7 +574,7 @@ void Draw::DrawBSplinePointCloudSurface(glm::vec3 Color, glm::vec3 pos, glm::vec
             c1[i][j] = mc[j * n_u + i]; // Correct mapping
         }
     }
-    MakeBiquadraticLine(n_u, d_u, 0, c1);
+    MakeLinearLine(n_u, d_u, 0, c1);
 
     this->Initalize();
 }
@@ -799,7 +799,7 @@ void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, s
     this->Initalize();
     
 }
-void Draw::MakeBiquadraticLine(const int n_u, int d_u, float v, std::vector<std::vector<glm::vec3>> c) {
+void Draw::MakeLinearLine(const int n_u, int d_u, float v, std::vector<std::vector<glm::vec3>> c) {
     float h = 0.1f; // Spacing between points
     vertices.clear();
     indices.clear();
@@ -813,11 +813,6 @@ void Draw::MakeBiquadraticLine(const int n_u, int d_u, float v, std::vector<std:
     for (int j = 0; j < nu; ++j) {
         float u = u_min + j * h;
 
-        // Find the corresponding knot interval for u
-        //int my_u = FindKnotInterval(mu, d_u, n_u, u);
-
-        // Fixed v interval
-        //int my_v = FindKnotInterval(mv, d_u, n_u, v);
 
         // Evaluate the biquadratic curve at the current u (for the fixed v)
         glm::vec3 linePoint = deBoor(d_u, d_u,mu,controllPoints,u);

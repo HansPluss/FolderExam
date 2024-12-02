@@ -79,7 +79,7 @@ public:
 	void CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal);
 	void FollowPlayer(Draw& ball, float speed);
 	void MakeBiquadraticSurface(const int n_u, const int n_v, int d_u, int d_v, std::vector<std::vector<glm::vec3>> c);
-	void MakeBiquadraticLine(const int n_u, int d_u, float v, std::vector<std::vector<glm::vec3>> c);
+	void MakeLinearLine(const int n_u, int d_u, float v, std::vector<std::vector<glm::vec3>> c);
 	glm::vec3 calculateNormalApproximation(
 		const std::vector<Vertex>& vertices,
 		int nu, int nv,
