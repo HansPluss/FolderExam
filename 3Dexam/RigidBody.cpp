@@ -1,31 +1,42 @@
 #include "RigidBody.h"
+#include <iostream> // For std::cout
+
 glm::vec3 RigidBody::CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal, float friction)
 {
     // Downward gravity force
-
-    slopeVector = glm::normalize(slopeVector);
-
-
     glm::vec3 gravityForce(0.0f, gravity, 0.0f);
 
-    // Calculating normal force (perpendicular to the slope)
+    // Calculate the normal force (perpendicular to the slope)
     float normalForceMagnitude = glm::dot(gravityForce, normal); // Gravity along the normal
     glm::vec3 normalForce = normal * normalForceMagnitude;
 
-    // Calculating gravitational force acting parallel to the slope (slope vector)
-    glm::vec3 gravityParallel = gravityForce - normalForce; // Parallel force along the slope
+    // Calculate the gravitational force acting parallel to the slope
+    glm::vec3 gravityParallel = gravityForce - normalForce; // Force parallel to the slope
 
-    // Projecting this parallel gravity onto the slope's horizontal direction (slopeVector)
+    // Project the parallel gravity onto the slope vector
     glm::vec3 gravityAlongSlope = glm::dot(gravityParallel, slopeVector) * slopeVector;
-    glm::vec3 frictionForce = gravityAlongSlope * -friction;
-    gravityAlongSlope += frictionForce;
-    // Applying the force along the slope
-    return gravityAlongSlope;
+
+    // Calculate the friction force
+    glm::vec3 frictionForce = glm::normalize(gravityAlongSlope) * -friction;
+
+    // Clamp friction force to not exceed the gravity along the slope
+    if (glm::length(frictionForce) > glm::length(gravityAlongSlope)) {
+        frictionForce = -gravityAlongSlope; // Fully opposes the motion
+    }
+
+    // Apply the friction to the gravity along the slope
+    glm::vec3 resultingForce = gravityAlongSlope + frictionForce;
+
+    // Return the final force along the slope
+    return resultingForce;
 }
+
+
+
 
 void RigidBody::ApplyForce(AccelerationComponent& aComponent, glm::vec3 force)
 {
-    aComponent.acceleration += force / 1.0f; // Mass to be added 
+    aComponent.acceleration += force / mass;
 }
 
 void RigidBody::Update(PositionComponent& pComponent, VelocityComponent& vComponent, AccelerationComponent& aComponent, float deltaTime)

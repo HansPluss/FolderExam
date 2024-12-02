@@ -1,4 +1,4 @@
-#include "Draw.h"
+﻿#include "Draw.h"
 #include "Resources/Shaders/shaderClass.h"
 #include "glm/gtc/type_ptr.hpp"
 #include <cmath>
@@ -199,7 +199,23 @@ void Draw::DrawSphere(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
             float angle = 2 * pi * u; // pi * 2 to get full sphere
             float x = std::cos(angle) * cosUp;
             float y = std::sin(angle) * cosUp;
-            Vertex V1 = Vertex{ x * radius, y * radius, z * radius, x, y, z, u, v };
+            std::srand(static_cast<unsigned int>(std::time(nullptr)));
+            float randomR = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
+            
+            float randomG = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
+           
+            float randomB = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
+            Vertex V1;
+            V1.x = x * radius;
+            V1.y = y * radius;
+            V1.z = z * radius;
+
+            V1.u = u;
+            V1.v = v;
+           
+            V1.r = randomR;
+            V1.g = randomG;
+            V1.b = randomB;
             vertices.push_back(V1);
         }
 
@@ -353,7 +369,7 @@ void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
     MakeBiquadraticSurface(n_u, n_v, d_u, d_v ,c);
 
     // Initialize any necessary OpenGL state
-    this->Initalize();
+    //this->Initalize();
 }
 
 
@@ -394,18 +410,18 @@ void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
         vertex.r = normalizedHeight;
         vertex.g = 1.0f - normalizedHeight;
         vertex.b = 0.5f * (1.0f - normalizedHeight);
-        if ((frictionOffset % 8 == 0) || (point.x > -50 && point.x < 50 && point.z > -50 && point.z < 50)) {
+        if ((frictionOffset % 2 == 0) || (point.x > -50 && point.x < 50 && point.z > -50 && point.z < 50)) {
             vertex.r = 0.0f;
             vertex.g = 0.0f;
             vertex.b = 1.0f;
-            vertex.friction = 0.9;
+            vertex.friction = 0.525;
         }
         else {
-            vertex.friction = 0.1;
+            vertex.friction = 0.0;
         }
-        vertex.normalx = 0.0f; // Initialize normal to zero
-        vertex.normaly = 0.0f;
-        vertex.normalz = 0.0f;
+        vertex.normalx = 1.0f; // Initialize normal to zero
+        vertex.normaly = 1.0f;
+        vertex.normalz = 1.0f;
 
         vertices.push_back(vertex);
     }
@@ -443,13 +459,30 @@ void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
     }
 
     // Normalize the accumulated normals for each vertex
-    for (auto& vertex : vertices) {
-        glm::vec3 normal(vertex.normalx, vertex.normaly, vertex.normalz);
-        normal = glm::normalize(normal);
+    for (int i = 1; i < numCols - 1; ++i) { // Skip the boundary vertices
+        for (int j = 1; j < numRows - 1; ++j) {
+            // Get the current vertex position
+            glm::vec3 currentPos(vertices[i * numCols + j].x, vertices[i * numCols + j].y, vertices[i * numCols + j].z);
 
-        vertex.normalx = normal.x;
-        vertex.normaly = normal.y;
-        vertex.normalz = normal.z;
+            // Get the neighboring vertices
+            glm::vec3 prevU(vertices[i * numCols + (j - 1)].x, vertices[i * numCols + (j - 1)].y, vertices[i * numCols + (j - 1)].z);
+            glm::vec3 nextU(vertices[i * numCols + (j + 1)].x, vertices[i * numCols + (j + 1)].y, vertices[i * numCols + (j + 1)].z);
+            glm::vec3 prevV(vertices[(i - 1) * numCols + j].x, vertices[(i - 1) * numCols + j].y, vertices[(i - 1) * numCols + j].z);
+            glm::vec3 nextV(vertices[(i + 1) * numCols + j].x, vertices[(i + 1) * numCols + j].y, vertices[(i + 1) * numCols + j].z);
+
+            // Calculate the tangent vectors in u and v directions
+            glm::vec3 tangentU = nextU - prevU;
+            glm::vec3 tangentV = nextV - prevV;
+
+            // Calculate the normal using the cross product of tangents
+            glm::vec3 normal = glm::normalize(glm::cross(tangentU, tangentV));
+
+            // Assign the normal to the vertex
+            int index = i * numCols + j;
+            vertices[index].normalx = normal.x;
+            vertices[index].normaly = normal.y;
+            vertices[index].normalz = normal.z;
+        }
     }
     this->Initalize();
 }
@@ -562,7 +595,7 @@ void Draw::Initalize()
     VAO.LinkAttrib(VBO, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, x)); // Position
     VAO.LinkAttrib(VBO, 1, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, r)); // Color
     VAO.LinkAttrib(VBO, 2, 2, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, u)); // TexCoords
-
+    VAO.LinkAttrib(VBO, 3, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, normalx));
     // Binding the EBO and upload index data
     EBO1.Bind();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
@@ -585,6 +618,7 @@ void Draw::InitalizePoints()
     VAO.LinkAttrib(VBO, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, x)); // Position
     VAO.LinkAttrib(VBO, 1, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, r)); // Color
     VAO.LinkAttrib(VBO, 2, 2, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, u)); // TexCoords
+    VAO.LinkAttrib(VBO, 3, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, normalx)); // TexCoords
     glPointSize(1.5f);
     // If using an EBO, you need to bind the EBO and upload index data
     if (!indices.empty()) // Check if you have index data
@@ -701,15 +735,15 @@ void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, s
             vertex.z = surfacePoint.z;
 
             // Assign color and texture coordinates
-            vertex.r = 1.0f;
-            vertex.g = 1.0f;
-            vertex.b = 1.0f;
+            vertex.r = 0.50f;
+            vertex.g = 0.50f;
+            vertex.b = 0.50f;
 
             vertex.u = static_cast<float>(j) / (nu - 1); // Column index normalized
             vertex.v = static_cast<float>(i) / (nv - 1); // Row index normalized
 
-            vertex.normalx = 0.0f;
-            vertex.normaly = 1.0f;
+            vertex.normalx = 0.0f; // Initialize normal to zero
+            vertex.normaly = 0.0f;
             vertex.normalz = 0.0f;
 
             // Push the computed surface point into the vertices array
@@ -736,6 +770,34 @@ void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, s
             indices.push_back(idx3);
         }
     }
+    for (int i = 1; i < nv - 1; ++i) { // Skip the boundary vertices
+        for (int j = 1; j < nu - 1; ++j) {
+            // Get the current vertex position
+            glm::vec3 currentPos(vertices[i * nu + j].x, vertices[i * nu + j].y, vertices[i * nu + j].z);
+
+            // Get the neighboring vertices
+            glm::vec3 prevU(vertices[i * nu + (j - 1)].x, vertices[i * nu + (j - 1)].y, vertices[i * nu + (j - 1)].z);
+            glm::vec3 nextU(vertices[i * nu + (j + 1)].x, vertices[i * nu + (j + 1)].y, vertices[i * nu + (j + 1)].z);
+            glm::vec3 prevV(vertices[(i - 1) * nu + j].x, vertices[(i - 1) * nu + j].y, vertices[(i - 1) * nu + j].z);
+            glm::vec3 nextV(vertices[(i + 1) * nu + j].x, vertices[(i + 1) * nu + j].y, vertices[(i + 1) * nu + j].z);
+
+            // Calculate the tangent vectors in u and v directions
+            glm::vec3 tangentU = nextU - prevU;
+            glm::vec3 tangentV = nextV - prevV;
+
+            // Calculate the normal using the cross product of tangents
+            glm::vec3 normal = glm::normalize(glm::cross(tangentU, tangentV));
+
+            // Assign the normal to the vertex
+            int index = i * nu + j;
+            vertices[index].normalx = normal.x;
+            vertices[index].normaly = normal.y;
+            vertices[index].normalz = normal.z;
+        }
+    }
+
+    this->Initalize();
+    
 }
 void Draw::MakeBiquadraticLine(const int n_u, int d_u, float v, std::vector<std::vector<glm::vec3>> c) {
     float h = 0.1f; // Spacing between points
@@ -789,6 +851,36 @@ void Draw::MakeBiquadraticLine(const int n_u, int d_u, float v, std::vector<std:
         indices.push_back(j + 1);
         
     }
+}
+
+glm::vec3 Draw::calculateNormalApproximation(const std::vector<Vertex>& vertices, int nu, int nv, int i, int j)
+{
+    glm::vec3 currentPos(vertices[i * nu + j].x, vertices[i * nu + j].y, vertices[i * nu + j].z);
+
+    // Calculate tangents
+    glm::vec3 tangentU, tangentV;
+
+    // Check bounds for neighbors
+    if (j + 1 < nu) {
+        glm::vec3 neighborU(vertices[i * nu + (j + 1)].x, vertices[i * nu + (j + 1)].y, vertices[i * nu + (j + 1)].z);
+        tangentU = neighborU - currentPos;
+    }
+    else {
+        tangentU = glm::vec3(1.0f, 0.0f, 0.0f); // Default direction
+    }
+
+    if (i + 1 < nv) {
+        glm::vec3 neighborV(vertices[(i + 1) * nu + j].x, vertices[(i + 1) * nu + j].y, vertices[(i + 1) * nu + j].z);
+        tangentV = neighborV - currentPos;
+    }
+    else {
+        tangentV = glm::vec3(0.0f, 1.0f, 0.0f); // Default direction
+    }
+
+    // Compute normal using cross product
+    glm::vec3 normal = glm::normalize(glm::cross(tangentU, tangentV));
+
+    return normal;
 }
 
 std::pair<glm::vec3, glm::vec3> Draw::B2(float tu, float tv, int my_u, int my_v)
@@ -1311,6 +1403,8 @@ void Draw::UpdateBSpline(glm::vec3 pos, glm::vec3 velocity)
 
     DrawBspline();
 }
+
+
 
 
 

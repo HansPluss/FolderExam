@@ -49,6 +49,8 @@ void processInput(GLFWwindow* window);
 bool del = false;
 bool spawnObj = false;
 bool isEKeyPressed = false;
+bool isQKeyPressed = false;
+bool toggle = false;
 // Window dimensions
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
@@ -126,16 +128,15 @@ int main()
     Entity ballObject;
     ballObject.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
     ballObject.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
-    ballObject.GetComponent<RenderComponent>()->Draw.bHasBsplineFollow = true;
     ballObject.AddComponent<VelocityComponent>();
     ballObject.AddComponent<AccelerationComponent>(10);
     ballObject.AddComponent<PhysicsComponet>();
     Entity ballObject_2;
-    ballObject_2.AddComponent<PositionComponent>(0.0f, 2.0f, 0.0f);
-    ballObject_2.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
+    ballObject_2.AddComponent<PositionComponent>(-20.0f, 2.0f, 0.0f);
+    ballObject_2.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f), "sphere");
     ballObject_2.AddComponent<VelocityComponent>();
     ballObject_2.AddComponent<AccelerationComponent>();
-    ballObject_2.AddComponent<PhysicsComponet>(1);
+    ballObject_2.AddComponent<PhysicsComponet>(2);
 
     Entity splinesurface;
     splinesurface.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
@@ -209,23 +210,25 @@ int main()
     Texture queball("Resources/Textures/queball.png", shaderProgram);
 
     // Light setup
-    glm::vec4 lightColor = glm::vec4(1.0f, 0.9f, 1.0f, 1.0f);
+   // Light properties
+    glm::vec4 lightColor = glm::vec4(1.0f, 0.9f, 0.9f, 0.9f); // Warm light
     glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::mat4 lightModel = glm::mat4(1.0f);
-    glUniformMatrix4fv(glGetUniformLocation(lightShader->ID, "model"), 1, GL_FALSE, glm::value_ptr(lightModel));
-    glUniform4f(glGetUniformLocation(lightShader->ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+
+    // Pass light properties to shader
+    glUniform4f(glGetUniformLocation(shaderProgram->ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+    glUniform3f(glGetUniformLocation(shaderProgram->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+
+    // Object transformation
     glm::vec3 objectPos = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::mat4 objectModel = glm::mat4(1.0f);
     objectModel = glm::translate(objectModel, objectPos);
-
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram->ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
-    glUniform4f(glGetUniformLocation(shaderProgram->ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-    glUniform3f(glGetUniformLocation(shaderProgram->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+
     
 
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram->ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
+   /* glUniformMatrix4fv(glGetUniformLocation(shaderProgram->ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
     glUniform4f(glGetUniformLocation(shaderProgram->ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-    glUniform3f(glGetUniformLocation(shaderProgram->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+    glUniform3f(glGetUniformLocation(shaderProgram->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);*/
 
 
 
@@ -251,7 +254,7 @@ int main()
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Wireframe mode
+        // Wireframe mode
 
         auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -274,8 +277,8 @@ int main()
        
 
         if (spawnObj) {
-            float randomX = static_cast<float>(std::rand() % 50) - 50.0f;
-            float randomZ = static_cast<float>(std::rand() % 50) - 50.0f;
+            float randomX = static_cast<float>(std::rand() % 500) - 500.0f;
+            float randomZ = static_cast<float>(std::rand() % 500) - 500.0f;
             BallObject& ball = manager->CreateEntityDerivedFromClass<BallObject>();
             BSpline& spline = manager->CreateEntityDerivedFromClass<BSpline>();
             physicsSystem->ApplyForce(ball, glm::vec3(randomX, 0, randomZ));
@@ -307,11 +310,11 @@ int main()
         for (int i = 0; i < myEntities.size(); ++i) {
 
             if (myEntities[i]->GetComponent<RenderComponent>()->shape == "bsplinesurface") {
-                glBindTexture(GL_TEXTURE_2D, green.texture);
+                //glBindTexture(GL_TEXTURE_2D, green.texture);
 
             }
             else if(myEntities[i]->GetComponent<RenderComponent>()->shape == "sphere"){
-                glBindTexture(GL_TEXTURE_2D, textures[1].texture);
+                 glBindTexture(GL_TEXTURE_2D, queball.texture);
 
             }
             else if (myEntities[i]->GetComponent<RenderComponent>()->shape == "cube") {
@@ -365,6 +368,23 @@ void processInput(GLFWwindow* window)
     }
     else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {   
         isEKeyPressed = false;
+    }
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+       
+        if (!isQKeyPressed && toggle == false) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            toggle = true;
+        }
+        else if(toggle && !isQKeyPressed) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            toggle = false;
+        }
+        
+
+        isQKeyPressed = true;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {
+        isQKeyPressed = false;
     }
 
 }

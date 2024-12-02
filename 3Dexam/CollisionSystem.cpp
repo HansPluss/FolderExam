@@ -103,40 +103,35 @@ void CollisionSystem::BarycentricCoordinates(Entity& ballEntity, Entity& planeEn
                 float inclineAngle = std::acos(normal.y);
                 glm::vec3 slopeVector = glm::normalize(glm::vec3(normal.x, 0.0f, normal.z)); // Slope direction
 
-                // Adjusting velocity based on slope incline
-                float speedAdjustment = glm::dot(currentVelocity, slopeVector);
-                if (currentVelocity.y > 0) { // Ball is moving upward
-                    currentVelocity.y -= speedAdjustment * sin(inclineAngle);
-
-                    // Ensuring ball doesn't go through the floor
-                    if (positionComponent->position.y < height + groundThreshold) {
-                        positionComponent->position.y = height + groundThreshold;
-                        currentVelocity.y = 0; // Stopping upward motion
-                    }
-                }
-                else if (currentVelocity.y < 0) { // Ball is moving downward
-                    currentVelocity.y += speedAdjustment * sin(inclineAngle);
-
-                    // Ensuring ball doesn't go through the floor
-                    if (positionComponent->position.y < height + groundThreshold) {
-                        positionComponent->position.y = height + groundThreshold;
-
-                        currentVelocity.y = 0; // Stopping downward motion
-                    }
-                }
+                
                
 
-              
-                // Update the velocity component
                 velocityComponent->velocity = currentVelocity;
+               
 
                 //std::cout << "Friction: " << frictionForce.x << ", " << frictionForce.y << ", " << frictionForce.z << std::endl;
 
                 // Calculating gravity effect along the slope and apply force
-                if (glm::length(slopeVector) > 0.00000001f) {
+               
                     glm::vec3 gravityAlongSlope = physicsSystem->CalculateGravity(inclineAngle, slopeVector, normal, frictionCoefficient);
+                    if (glm::length(currentVelocity) > 0.0f) {
+                        glm::vec3 velocityDirection = glm::normalize(currentVelocity);
+                        glm::vec3 frictionForce = -frictionCoefficient * glm::length(normal) * velocityDirection;
+
+                        // Cap the friction force to not exceed the current velocity's magnitude
+                        if (glm::length(frictionForce) > glm::length(currentVelocity)) {
+                            frictionForce = -currentVelocity; // Fully opposes motion, stopping the object
+                        }
+
+                        // Update velocity considering both gravity and friction
+                        velocityComponent->velocity = currentVelocity + gravityAlongSlope + frictionForce;
+                    }
+                    else {
+                        // If velocity is zero, only gravity acts
+                        velocityComponent->velocity += gravityAlongSlope;
+                    }
                     physicsSystem->ApplyForce(ballEntity, gravityAlongSlope);
-                }
+                
 
             }
 

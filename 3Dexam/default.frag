@@ -1,68 +1,65 @@
 #version 330 core
 
-// Outputs colors in RGBA
-out vec4 FragColor;
+out vec4 FragColor; // Final color output
 
+in vec3 Normal;  // The normal from the vertex shader
+in vec2 TexCoord; // Texture coordinates from the vertex shader
+in vec3 FragPos;  // The fragment position in world space
+in vec3 color;    // Vertex color
 
-// Inputs the color from the Vertex Shader
-in vec3 color;
+uniform vec4 lightColor; // Light color
+uniform vec3 lightPos;   // Light position
+uniform vec3 camPos;     // Camera position
 
-in vec2 texCoord;
+uniform sampler2D tex0; // Base texture
 
-in vec3 Normal;
-
-uniform sampler2D tex0;
-uniform sampler2D tex1;
-// Gets the color of the light from the main function
-uniform vec4 lightColor;
-// Gets the position of the light from the main function
-uniform vec3 lightPos;
-// Gets the position of the camera from the main function
-uniform vec3 camPos;
-in vec3 crntPos;
+// Material properties
 struct Material {
-    vec3 diffuse; 
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
 };
-vec4 spotLight()
+
+// Phong lighting calculation
+vec4 PhongLighting(Material mat)
 {
-	// controls how big the area that is lit up is
-	float outerCone = 0.40f;
-	float innerCone = 0.95f;
+    // Ambient lighting (simple constant term)
+    vec3 ambient = 0.9 * mat.diffuse;
 
-	// ambient lighting
-	float ambient = 0.90f;
+    // Diffuse lighting
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - FragPos);
+    float diff = max(dot(norm, lightDir), 0.0);
 
-	// diffuse lighting
-	vec3 normal = normalize(Normal);
-	vec3 lightDirection = normalize(lightPos - crntPos);
-	float diffuse = max(dot(normal, lightDirection), 0.0f);
+    // Specular lighting
+    vec3 viewDir = normalize(camPos - FragPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), mat.shininess);
 
-	// specular lighting
-	float specular = 0.0f;
-	if (diffuse != 0.0f)
-	{
-		float specularLight = 0.50f;
-		vec3 viewDirection = normalize(camPos - crntPos);
-		vec3 halfwayVec = normalize(viewDirection + lightDirection);
-		float specAmount = pow(max(dot(normal, halfwayVec), 0.0f), 16);
-		specular = specAmount * specularLight;
-	};
+    // Combine all components
+    vec3 diffuse = diff * mat.diffuse;
+    vec3 specular = spec * mat.specular;
 
-	// calculates the intensity of the crntPos based on its angle to the center of the light cone
-	float angle = dot(vec3(0.0f, -1.0f, 0.0f), -lightDirection);
-	float inten = clamp((angle - outerCone) / (innerCone - outerCone), 0.0f, 1.0f);
-
-	return (texture(tex0, texCoord) * (diffuse * inten + ambient) + texture(tex1, texCoord).r * specular * inten) * lightColor;
+    return vec4(ambient + diffuse + specular, 1.0) * texture(tex0, TexCoord);
 }
+
 void main()
 {
-    //Material mat; 
-    //mat.diffuse = vec3(texture(tex0, texCoord));
-    //vec3 finalColor = mat.diffuse * color; 
-    //FragColor = vec4(finalColor, 1.0f);
-	
-	
-	FragColor = spotLight();
-	FragColor = vec4(color, 1.0f);
-	
+    // Set material properties
+    Material mat;
+    mat.diffuse = vec3(1.0, 1.0, 1.0); // Example diffuse color
+    mat.specular = vec3(1.0, 1.0, 1.0); // Example specular color
+    mat.shininess = 32.0; // Shininess coefficient
+
+    // Phong lighting calculation
+    vec4 lighting = PhongLighting(mat);
+
+    // Map Normal to RGB
+    vec4 normalColor = vec4(Normal * 0.5 + 0.5, 1.0); // Convert Normal to RGB and add alpha
+
+    // Blend Normal Color with Lighting
+    vec4 FinalColor = lighting * normalColor;
+
+    // Output the final color
+    FragColor = FinalColor;
 }
