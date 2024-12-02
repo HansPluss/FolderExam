@@ -52,8 +52,8 @@ bool isEKeyPressed = false;
 bool isQKeyPressed = false;
 bool toggle = false;
 // Window dimensions
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 800;
+const unsigned int SCR_WIDTH = 1800;
+const unsigned int SCR_HEIGHT = 1200;
 
 double scrollY = 0.0;  // Store scroll amount
 
@@ -126,17 +126,17 @@ int main()
 
     // Terrain Entity
     Entity ballObject;
-    ballObject.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
+    ballObject.AddComponent<PositionComponent>(0.0f, 10.0f, 0.0f);
     ballObject.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
     ballObject.AddComponent<VelocityComponent>();
-    ballObject.AddComponent<AccelerationComponent>(10);
+    ballObject.AddComponent<AccelerationComponent>();
     ballObject.AddComponent<PhysicsComponet>();
     Entity ballObject_2;
-    ballObject_2.AddComponent<PositionComponent>(-20.0f, 2.0f, 0.0f);
-    ballObject_2.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f), "sphere");
+    ballObject_2.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
+    ballObject_2.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(4.0f, 4.0f, 4.0f), "sphere");
     ballObject_2.AddComponent<VelocityComponent>();
     ballObject_2.AddComponent<AccelerationComponent>();
-    ballObject_2.AddComponent<PhysicsComponet>(2);
+    ballObject_2.AddComponent<PhysicsComponet>(10);
 
     Entity splinesurface;
     splinesurface.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
@@ -337,8 +337,7 @@ int main()
 
         //Deletes the entities
         //manager->DeleteEntities(myEntities);
-        //UI display
-        //imgui->BasicText("Inventory", player);
+       
 
         glfwSwapBuffers(window);
         glfwPollEvents();

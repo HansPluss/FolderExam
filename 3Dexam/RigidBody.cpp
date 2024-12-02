@@ -34,9 +34,9 @@ glm::vec3 RigidBody::CalculateGravity(float inclineAngle, glm::vec3 slopeVector,
 
 
 
-void RigidBody::ApplyForce(AccelerationComponent& aComponent, glm::vec3 force)
+void RigidBody::ApplyForce(AccelerationComponent& aComponent,PhysicsComponet& physicsComponent, glm::vec3 force)
 {
-    aComponent.acceleration += force / mass;
+    aComponent.acceleration = force / physicsComponent.mass;
 }
 
 void RigidBody::Update(PositionComponent& pComponent, VelocityComponent& vComponent, AccelerationComponent& aComponent, float deltaTime)

@@ -31,9 +31,10 @@ public:
 
 		if (entity.isMarkedForDeletion) return;
 		auto* accelerationComponent = entity.GetComponent<AccelerationComponent>();
+		auto* physicsComponent = entity.GetComponent<PhysicsComponet>();
 		if (accelerationComponent) {
 
-			rigidBody.ApplyForce(*accelerationComponent, force);
+			rigidBody.ApplyForce(*accelerationComponent, *physicsComponent, force);
 		}
 	}
 	void ApplyDODForce(AccelerationStorage& aStorage, glm::vec3 force, int Id) {

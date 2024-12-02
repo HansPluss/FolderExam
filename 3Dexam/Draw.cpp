@@ -414,7 +414,7 @@ void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
             vertex.r = 0.0f;
             vertex.g = 0.0f;
             vertex.b = 1.0f;
-            vertex.friction = 0.525;
+            vertex.friction = 0.90;
         }
         else {
             vertex.friction = 0.0;
@@ -484,6 +484,7 @@ void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
             vertices[index].normalz = normal.z;
         }
     }
+
     this->Initalize();
 }
 
