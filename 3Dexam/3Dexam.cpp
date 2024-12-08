@@ -17,8 +17,8 @@
 #include "Entity.h"
 #include "Player.h"
 #include "Component.h"
-#include "BallObject.h"
-#include "BSpline.h"
+
+
 
 
 
@@ -31,18 +31,24 @@
 #include "PhysicsSystem.h"
 #include "CollisionSystem.h"
 #include "InputSystem.h"
+#include "ParticleSystem.h"
 
 
 
 #include <fstream>  // std::ifstream
 
+//extern "C" {
+//#include "lua54/include/lua.h"
+//#include "lua54/include/lauxlib.h"
+//#include "lua54/include/lualib.h"
+//}
+//
+//#ifdef _WIN32
+//#pragma comment(lib, "lua54/lua54.lib")
+//#endif
 
 
 
-
-// Some of the code for the spotlight is from the following repo
-// https://github.com/VictorGordan/opengl-tutorials.git
-// 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);  // Dynamic window size
 void processInput(GLFWwindow* window);
@@ -101,7 +107,21 @@ int main()
 
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
-   
+    //try {
+    //    AIComponent ai(3.5f, 75.0f);
+
+    //    // Load the Lua script
+    //    ai.LoadScript("test.lua");
+
+    //    // Update AI (calls the Lua function)
+    //    ai.UpdateAI();
+    //}
+    //catch (const std::exception& e) {
+    //    std::cout << "Exception: " << e.what() << std::endl;
+    //    return -1;
+    //}
+
+    //return 0;
    
 
     // Shader setup
@@ -133,36 +153,29 @@ int main()
     ballObject.AddComponent<PhysicsComponet>();
     Entity ballObject_2;
     ballObject_2.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
-    ballObject_2.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(4.0f, 4.0f, 4.0f), "sphere");
+    ballObject_2.AddComponent<RenderComponent>(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(4.0f, 4.0f, 4.0f), "sphere");
     ballObject_2.AddComponent<VelocityComponent>();
     ballObject_2.AddComponent<AccelerationComponent>();
     ballObject_2.AddComponent<PhysicsComponet>(10);
 
-    Entity splinesurface;
-    splinesurface.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
-    splinesurface.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinesurface");
-
-    Entity bSpline;
-    bSpline.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
-    bSpline.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bSpline");
-
-    Entity bSplinePointSurface;
-    bSplinePointSurface.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
-    bSplinePointSurface.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinepointsurface");
+   
 
     Entity pointCloud;
     pointCloud.AddComponent<PositionComponent>(0.0f,0.0f,0.0f);
     pointCloud.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "pointcloud");
 
+    Entity p_system;
+    p_system.AddComponent<PositionComponent>(0.0, 20.0, 0.0);
+    p_system.AddComponent<ParticleComponent>();
 
     // Intializing Systems
     std::shared_ptr <RenderingSystem> renderSystem = std::make_shared<RenderingSystem>();
     std::shared_ptr <PhysicsSystem> physicsSystem = std::make_shared<PhysicsSystem>();
     std::shared_ptr <CollisionSystem> collisionSystem = std::make_shared<CollisionSystem>();
-
+    std::shared_ptr <ParticleSystem> particleSystem = std::make_shared<ParticleSystem>();
     renderSystem->initalize(pointCloud);
-    renderSystem->initalize(ballObject);
-    renderSystem->initalize(bSpline);
+    
+
    
     int cellSize = 8;
     int gridSizeX = 1000;
@@ -173,11 +186,8 @@ int main()
     m_grid->AddBaLL(&ballObject_2);
     // Intializing entity vector
     std::vector<Entity*> myEntities;
-    myEntities.push_back(&ballObject);
-    myEntities.push_back(&ballObject_2);
-    myEntities.push_back(&splinesurface);
-    //myEntities.push_back(&bSplinePointSurface);
-   // myEntities.push_back(&bSpline);
+   
+  
    
 
     //Add all components to storage for batch proccesing
@@ -203,7 +213,6 @@ int main()
 
     // Camera FOV & starting position
     std::shared_ptr<Camera> camera = std::make_shared<Camera>(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 0.0f, 0.0f));
-    //607200.3700,6750618.6100,270.2300
     // Initalizing textures
     Texture wood("Resources/Textures/wood.png", shaderProgram);
     Texture green("Resources/Textures/green.jpg", shaderProgram);
@@ -224,14 +233,6 @@ int main()
     objectModel = glm::translate(objectModel, objectPos);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram->ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
 
-    
-
-   /* glUniformMatrix4fv(glGetUniformLocation(shaderProgram->ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
-    glUniform4f(glGetUniformLocation(shaderProgram->ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-    glUniform3f(glGetUniformLocation(shaderProgram->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);*/
-
-
-
     glfwSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -244,7 +245,7 @@ int main()
 
     std::shared_ptr<Collision> collision = std::make_shared<Collision>();
     int num = 0;
-    int LineUpdateTick = 0;
+  
     // ---------------------------------------------------------------------------------------------------------------------------
     //                                                        Main Loop
     // ---------------------------------------------------------------------------------------------------------------------------
@@ -272,41 +273,15 @@ int main()
         //pointcloud 
         glBindTexture(GL_TEXTURE_2D, green.texture);
         renderSystem->RenderPoints(pointCloud, shaderProgram, viewproj);
-        renderSystem->Render(bSpline, shaderProgram, viewproj);
+       
         collision->UpdateCollision(m_grid.get(), dt);
+        glBindTexture(GL_TEXTURE_2D, queball.texture);
+        renderSystem->RenderParticles(p_system, shaderProgram, viewproj);
        
-
-        if (spawnObj) {
-            float randomX = static_cast<float>(std::rand() % 500) - 500.0f;
-            float randomZ = static_cast<float>(std::rand() % 500) - 500.0f;
-            BallObject& ball = manager->CreateEntityDerivedFromClass<BallObject>();
-            BSpline& spline = manager->CreateEntityDerivedFromClass<BSpline>();
-            physicsSystem->ApplyForce(ball, glm::vec3(randomX, 0, randomZ));
-            ball.attachedSpline = &spline;
-            spline.attachedBall = &ball;
-            spline.GetComponent<PositionComponent>()->position = ball.GetComponent<PositionComponent>()->GetPosition();
-            renderSystem->initalize(ball);
-            renderSystem->initalize(spline);
-            myEntities.push_back(&ball);
-            myEntities.push_back(&spline);
-            spawnObj = false;
-        }
-
-        LineUpdateTick += 1;
+        particleSystem->update(*p_system.GetComponent<ParticleComponent>(), dt);
+        particleSystem->emit(*p_system.GetComponent<ParticleComponent>(), p_system.GetComponent<PositionComponent>()->position);
        
-        if (LineUpdateTick % 50 == 0) {
-           // std::cout << "D" << std::endl;
-            for (auto* entity : myEntities) {
-                if (BallObject* ball = dynamic_cast<BallObject*>(entity)) {
-                    if (ball->attachedSpline) {
-                        glm::vec3 ballPos = ball->GetComponent<PositionComponent>()->GetPosition();
-                        glm::vec3 ballVel = ball->GetComponent<VelocityComponent>()->GetVelocity();
-                        //ball->attachedSpline->GetComponent<PositionComponent>()->position = ball->GetComponent<PositionComponent>()->GetPosition();
-                        ball->attachedSpline->GetComponent<RenderComponent>()->Draw.UpdateBSpline(ballPos, ballVel);
-                    }
-                }
-            }
-        }
+       
         for (int i = 0; i < myEntities.size(); ++i) {
 
             if (myEntities[i]->GetComponent<RenderComponent>()->shape == "bsplinesurface") {

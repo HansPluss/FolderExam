@@ -101,5 +101,12 @@ public:
         
 
     }
+    void RenderParticles(Entity& entity, const std::shared_ptr<Shader>& shader, glm::mat4 viewproj) {
+        auto* particleComponet = entity.GetComponent<ParticleComponent>();
+        if (particleComponet) {
+            particleComponet->draw.RenderParticle(shader, viewproj, *particleComponet);
+        }
+
+    }
 
 };

@@ -708,6 +708,61 @@ void Draw::RenderPoints(const std::shared_ptr<Shader>& shader, glm::mat4 viewpro
     EBO1.Unbind();
 }
 
+void Draw::RenderParticle(const std::shared_ptr<Shader>& shader, glm::mat4 viewproj, ParticleComponent& particles)
+{
+    // Generate or bind VAO/VBO if not already set up
+    
+
+    // Prepare particle data for rendering
+    std::vector<float> vertexData; // Interleaved positions and colors
+    vertexData.reserve(particles.count * 7); // 3 for position, 4 for color
+
+    for (size_t i = 0; i < particles.count; ++i) {
+        const glm::vec3& pos = particles.positions[i];
+        const glm::vec4& color = particles.colors[i];
+
+        // Append position
+        vertexData.push_back(pos.x);
+        vertexData.push_back(pos.y);
+        vertexData.push_back(pos.z);
+
+        // Append color
+        vertexData.push_back(color.r);
+        vertexData.push_back(color.g);
+        vertexData.push_back(color.b);
+        vertexData.push_back(color.a);
+    }
+
+    // Update VBO with new particle data
+    VBO.Bind();
+    glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_DYNAMIC_DRAW);
+
+    // Set up vertex attributes (position and color)
+    VAO.Bind();
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0); // Position
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float))); // Color
+    glEnableVertexAttribArray(1);
+
+    // Set shader uniform
+    GLint camMatrixLocation = glGetUniformLocation(shader->ID, "camMatrix");
+    if (camMatrixLocation != -1) {
+        glUniformMatrix4fv(camMatrixLocation, 1, GL_FALSE, glm::value_ptr(viewproj));
+    }
+    else {
+        std::cerr << "Error: 'camMatrix' uniform not found in shader!" << std::endl;
+    }
+
+    // Render particles
+    glPointSize(5.0f); // Set point size for particles
+    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(particles.count));
+
+    // Unbind
+    VAO.Unbind();
+    VBO.Unbind();
+}
+
 
 
 void Draw::MakeBiquadraticSurface(const int n_u,const int n_v,int d_u,int d_v, std::vector<std::vector<glm::vec3>> c)

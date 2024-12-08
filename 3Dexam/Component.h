@@ -2,7 +2,19 @@
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
+#include <array>
 #include "draw.h"
+
+//extern "C" {
+//#include "lua54/include/lua.h"
+//#include "lua54/include/lauxlib.h"
+//#include "lua54/include/lualib.h"
+//
+//}
+//
+//#ifdef _WIN32
+//#pragma comment(lib, "lua54/lua54.lib")
+//#endif
 // TO DO ADD COMMENTS
 class Component {
 public:
@@ -116,14 +128,79 @@ public:
 };
 class AIComponent : public Component {
 public:
-    float speed; // variables the AI can use to tweak, detection, speed etc 
+    float speed;
     float detectionRadius;
+    //lua_State* luaState;        // Lua state for this component
 
-    AIComponent(float speed = 2.0f, float radius = 50.0f)
-        : speed(speed), detectionRadius(radius) {
+    //AIComponent(float speed = 2.0f, float radius = 50.0f)
+    //    : speed(speed), detectionRadius(radius), luaState(luaL_newstate()) {
+    //    if (!luaState) {
+    //       // throw std::runtime_error("Failed to create Lua state");
+    //    }
+    //    luaL_openlibs(luaState); // Load Lua standard libraries
+    //}
 
+    //~AIComponent() {
+    //    if (luaState) {
+    //        lua_close(luaState); // Close the Lua state when done
+    //    }
+    //}
 
+    //void LoadScript(const std::string& scriptPath) {
+    //    if (luaL_dofile(luaState, scriptPath.c_str()) != LUA_OK) {
+    //        std::cout << "Error loading Lua script: " << lua_tostring(luaState, -1) << std::endl;
+    //        lua_pop(luaState, 1); // Remove error message from the stack
+    //    }
+    //}
+
+    //void UpdateAI() {
+    //    lua_getglobal(luaState, "AI_Behavior");
+    //    if (!lua_isfunction(luaState, -1)) {
+    //        std::cout << "AI_Behavior function not found in Lua script!" << std::endl;
+    //        lua_pop(luaState, 1);
+    //        return;
+    //    }
+
+    //    lua_pushnumber(luaState, speed);
+    //    lua_pushnumber(luaState, detectionRadius);
+
+    //    if (lua_pcall(luaState, 2, 1, 0) != LUA_OK) { // Expect 1 return value
+    //        std::cout << "Error executing AI_Behavior: " << lua_tostring(luaState, -1) << std::endl;
+    //        lua_pop(luaState, 1);
+    //        return;
+    //    }
+
+    //    // Retrieve the return value
+    //    if (lua_isnumber(luaState, -1)) {
+    //        speed = static_cast<float>(lua_tonumber(luaState, -1));
+    //    }
+    //    lua_pop(luaState, 1); // Clean up the stack
+    //}
+};
+const size_t MAX_PARTICLES = 2500;
+class ParticleComponent : public Component {
+public:
+    // Particle data arrays (Structure of Arrays)
+    std::array<glm::vec3, MAX_PARTICLES> positions;   // Particle positions
+    std::array<glm::vec3, MAX_PARTICLES> velocities;  // Particle velocities
+    std::array<glm::vec4, MAX_PARTICLES> colors;      // Particle colors (RGBA)
+    std::array<float, MAX_PARTICLES> lifetimes;       // Particle lifetimes
+
+    size_t count; // Current number of active particles
+    Draw draw;
+    // Default constructor
+    ParticleComponent()
+        : count(0) { // Initialize count to zero
+        // Initialize all particles to default values
+        for (size_t i = 0; i < MAX_PARTICLES; ++i) {
+            positions[i] = glm::vec3(0.0f);            // Default position at origin
+            velocities[i] = glm::vec3(0.0f);           // No initial velocity
+            colors[i] = glm::vec4(1.0f, 1.0f, 1.0f, 0.50f); // Fully transparent white
+            lifetimes[i] = 0.0f;                       // Zero lifetime (inactive)
+        }
     }
+
+
 
 };
 class InputComponent : public Component {

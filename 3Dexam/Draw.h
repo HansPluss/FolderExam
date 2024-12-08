@@ -17,6 +17,7 @@ class Shader;
 struct Cell; 
 class Grid; 
 class PositionComponent;
+class ParticleComponent;
 
 	template <>
 	struct std::hash<glm::vec3> {
@@ -70,6 +71,7 @@ public:
 	//|-----------------------------------------------------------------------------|		
 	void Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, PositionComponent& pos);
 	void RenderPoints(const std::shared_ptr<Shader>& shader, glm::mat4 viewproj, PositionComponent& pos);
+	void RenderParticle(const std::shared_ptr<Shader>& shader, glm::mat4 viewproj, ParticleComponent& particles);
 	
 	void Update(float deltaTime, Grid* grid);
 	void ApplyForce(glm::vec3 force);
