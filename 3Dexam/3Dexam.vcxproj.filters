@@ -3080,7 +3080,6 @@
     <None Include="sol\meson.build" />
     <None Include="sol\README.md" />
     <None Include="sol\sol2.pc.in" />
-    <None Include="lua54.dll" />
     <None Include="Dependency\includes\sol\documentation\source\_themes\sol2\layout.html" />
     <None Include="Dependency\includes\sol\.clang-format" />
     <None Include="Dependency\includes\sol\.dockerignore" />
