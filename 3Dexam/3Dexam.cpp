@@ -17,6 +17,7 @@
 #include "Entity.h"
 #include "Player.h"
 #include "Component.h"
+#include "QuadTree.h"
 
 
 
@@ -37,15 +38,15 @@
 
 #include <fstream>  // std::ifstream
 
-//extern "C" {
-//#include "lua54/include/lua.h"
-//#include "lua54/include/lauxlib.h"
-//#include "lua54/include/lualib.h"
-//}
-//
-//#ifdef _WIN32
-//#pragma comment(lib, "lua54/lua54.lib")
-//#endif
+extern "C" {
+#include "lua54/include/lua.h"
+#include "lua54/include/lauxlib.h"
+#include "lua54/include/lualib.h"
+}
+
+#ifdef _WIN32
+#pragma comment(lib, "lua54/lua54.lib")
+#endif
 
 
 
@@ -77,7 +78,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     }
     inputSystem->SetMouseInput(scrollY);
 }
-
+AIComponent ai(3.5f, 75.0f);
 int main()
 {
     // glfw: initialize and configure
@@ -107,23 +108,13 @@ int main()
 
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
-    //try {
-    //    AIComponent ai(3.5f, 75.0f);
-
+    
+    
     //    // Load the Lua script
-    //    ai.LoadScript("test.lua");
+    ai.LoadScript("aiBehavoir.lua");
 
-    //    // Update AI (calls the Lua function)
-    //    ai.UpdateAI();
-    //}
-    //catch (const std::exception& e) {
-    //    std::cout << "Exception: " << e.what() << std::endl;
-    //    return -1;
-    //}
-
-    //return 0;
    
-
+    
     // Shader setup
     std::shared_ptr<Shader> shaderProgram = std::make_shared<Shader>("default.vert", "default.frag");
     shaderProgram->Activate();
@@ -146,23 +137,27 @@ int main()
 
     // Terrain Entity
     Entity ballObject;
-    ballObject.AddComponent<PositionComponent>(0.0f, 10.0f, 0.0f);
+    ballObject.AddComponent<PositionComponent>(0.0f, 5.0f, 0.0f);
     ballObject.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
     ballObject.AddComponent<VelocityComponent>();
     ballObject.AddComponent<AccelerationComponent>();
     ballObject.AddComponent<PhysicsComponet>();
     Entity ballObject_2;
     ballObject_2.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
-    ballObject_2.AddComponent<RenderComponent>(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(4.0f, 4.0f, 4.0f), "sphere");
+    ballObject_2.AddComponent<RenderComponent>(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
     ballObject_2.AddComponent<VelocityComponent>();
     ballObject_2.AddComponent<AccelerationComponent>();
-    ballObject_2.AddComponent<PhysicsComponet>(10);
+    ballObject_2.AddComponent<PhysicsComponet>(1);
 
    
 
     Entity pointCloud;
     pointCloud.AddComponent<PositionComponent>(0.0f,0.0f,0.0f);
-    pointCloud.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "pointcloud");
+    pointCloud.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "terrain");
+
+    Entity cube;
+    cube.AddComponent<PositionComponent>(0, 0, 0);
+    cube.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "cube");
 
     Entity p_system;
     p_system.AddComponent<PositionComponent>(0.0, 20.0, 0.0);
@@ -178,15 +173,21 @@ int main()
 
    
     int cellSize = 8;
-    int gridSizeX = 1000;
-    int gridSizeZ = 1000;
+    int gridSizeX = 4;
+    int gridSizeZ = 4;
+    glm::vec4 treeBounds(0, 0, gridSizeX, gridSizeZ);
     std::unique_ptr<Grid> m_grid = std::make_unique<Grid>(gridSizeX, gridSizeZ, cellSize);
-
-    m_grid->AddBaLL(&ballObject);
-    m_grid->AddBaLL(&ballObject_2);
+    QuadTree q_tree(0, treeBounds);
+    q_tree.Insert(&ballObject);
+    q_tree.Insert(&ballObject_2);
+   
+    //m_grid->AddBaLL(&ballObject);
+   // m_grid->AddBaLL(&ballObject_2);
     // Intializing entity vector
     std::vector<Entity*> myEntities;
-   
+    //myEntities.push_back(&pointCloud);
+    myEntities.push_back(&ballObject);
+    myEntities.push_back(&ballObject_2);
   
    
 
@@ -233,6 +234,7 @@ int main()
     objectModel = glm::translate(objectModel, objectPos);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram->ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
 
+
     glfwSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -271,21 +273,22 @@ int main()
         glm::mat4 viewproj = camera->Matrix(45.0f, 0.1f, 1000.0f, shaderProgram, "camMatrix");
        // camera->Position = glm::vec3(player.GetComponent<PositionComponent>()->position.x, camera->Position.y, player.GetComponent<PositionComponent>()->position.z + 25);
         //pointcloud 
+        ai.UpdateAI();
         glBindTexture(GL_TEXTURE_2D, green.texture);
         renderSystem->RenderPoints(pointCloud, shaderProgram, viewproj);
        
-        collision->UpdateCollision(m_grid.get(), dt);
+        collisionSystem->UpdateCollision(&q_tree, myEntities,dt);
         glBindTexture(GL_TEXTURE_2D, queball.texture);
         renderSystem->RenderParticles(p_system, shaderProgram, viewproj);
        
         particleSystem->update(*p_system.GetComponent<ParticleComponent>(), dt);
         particleSystem->emit(*p_system.GetComponent<ParticleComponent>(), p_system.GetComponent<PositionComponent>()->position);
        
-       
+        //collisionSystem->SphereCollision(ballObject, ballObject_2, dt);
         for (int i = 0; i < myEntities.size(); ++i) {
 
-            if (myEntities[i]->GetComponent<RenderComponent>()->shape == "bsplinesurface") {
-                //glBindTexture(GL_TEXTURE_2D, green.texture);
+            if (myEntities[i]->GetComponent<RenderComponent>()->shape == "terrain") {
+                glBindTexture(GL_TEXTURE_2D, green.texture);
 
             }
             else if(myEntities[i]->GetComponent<RenderComponent>()->shape == "sphere"){
@@ -301,6 +304,7 @@ int main()
             physicsSystem->Update(*myEntities[i], dt);
             //Calculates the collisions
             collisionSystem->BarycentricCoordinates(*myEntities[i],pointCloud, physicsSystem);
+            
             //Renders the entities
             renderSystem->RenderPoints(*myEntities[i], shaderProgram, viewproj);
             
@@ -347,6 +351,7 @@ void processInput(GLFWwindow* window)
        
         if (!isQKeyPressed && toggle == false) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+          
             toggle = true;
         }
         else if(toggle && !isQKeyPressed) {

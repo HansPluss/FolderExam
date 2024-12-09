@@ -25,7 +25,7 @@ glm::vec3 RigidBody::CalculateGravity(float inclineAngle, glm::vec3 slopeVector,
     }
 
     // Apply the friction to the gravity along the slope
-    glm::vec3 resultingForce = gravityAlongSlope + frictionForce;
+    glm::vec3 resultingForce = gravityAlongSlope;
 
     // Return the final force along the slope
     return resultingForce;

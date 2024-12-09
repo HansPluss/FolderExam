@@ -3,6 +3,7 @@
 class Draw; 
 class Grid; 
 class Entity;
+class QuadTree;
 
 class Collision
 
@@ -14,7 +15,7 @@ public:
 	//|-----------------------------------------------------------------------------|
 	//|									Public Functions							|
 	//|-----------------------------------------------------------------------------|
-	void UpdateCollision(Grid* grid, float dt); 
+	void UpdateCollision(QuadTree* quadTree, std::vector<Entity*>& allEntities, float dt);
 	bool AABBCollision(Draw &objA, Draw &objB, float DeltaTime);
 	bool InvAABBCollision(Draw& objA, Draw& objB, float DeltaTime);
 	

@@ -167,8 +167,6 @@
     <ClCompile Include="Resources\Shaders\VAO.cpp" />
     <ClCompile Include="Resources\Shaders\VBO.cpp" />
     <ClCompile Include="RigidBody.cpp" />
- 
-    
     <ClCompile Include="stb.cpp" />
     <ClCompile Include="Texture.cpp" />
   </ItemGroup>
@@ -187,7 +185,6 @@
     <ClInclude Include="Dependency\includes\imgui\imstb_rectpack.h" />
     <ClInclude Include="Dependency\includes\imgui\imstb_textedit.h" />
     <ClInclude Include="Dependency\includes\imgui\imstb_truetype.h" />
-
     <ClInclude Include="Draw.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="EntityManager.h" />
@@ -198,7 +195,6 @@
     <ClInclude Include="includes\glm\mat4x3.hpp" />
     <ClInclude Include="includes\KHR\khrplatform.h" />
     <ClInclude Include="InputSystem.h" />
-
     <ClInclude Include="ParticleSystem.h" />
     <ClInclude Include="PhysicsSystem.h" />
     <ClInclude Include="Player.h" />
@@ -209,20 +205,14 @@
     <ClInclude Include="Resources\Shaders\VAO.h" />
     <ClInclude Include="Resources\Shaders\VBO.h" />
     <ClInclude Include="RigidBody.h" />
-
-    
     <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="default.frag" />
     <None Include="default.vert" />
- 
-
     <None Include="imgui.ini" />
     <None Include="light.frag" />
     <None Include="light.vert" />
-
-    <None Include="test.lua" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\Textures\brick.png" />
@@ -230,13 +220,10 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="32-2-516-156-31.txt" />
- 
   </ItemGroup>
   <ItemGroup>
-
   </ItemGroup>
   <ItemGroup>
-  
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

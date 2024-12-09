@@ -4,17 +4,17 @@
 #include <vector>
 #include <array>
 #include "draw.h"
+#include <iostream>
+extern "C" {
+#include "lua54/include/lua.h"
+#include "lua54/include/lauxlib.h"
+#include "lua54/include/lualib.h"
 
-//extern "C" {
-//#include "lua54/include/lua.h"
-//#include "lua54/include/lauxlib.h"
-//#include "lua54/include/lualib.h"
-//
-//}
-//
-//#ifdef _WIN32
-//#pragma comment(lib, "lua54/lua54.lib")
-//#endif
+}
+
+#ifdef _WIN32
+#pragma comment(lib, "lua54/lua54.lib")
+#endif
 // TO DO ADD COMMENTS
 class Component {
 public:
@@ -130,54 +130,81 @@ class AIComponent : public Component {
 public:
     float speed;
     float detectionRadius;
-    //lua_State* luaState;        // Lua state for this component
+    lua_State* luaState;        // Lua state for this component
 
-    //AIComponent(float speed = 2.0f, float radius = 50.0f)
-    //    : speed(speed), detectionRadius(radius), luaState(luaL_newstate()) {
-    //    if (!luaState) {
-    //       // throw std::runtime_error("Failed to create Lua state");
-    //    }
-    //    luaL_openlibs(luaState); // Load Lua standard libraries
-    //}
+    AIComponent(float speed = 2.0f, float radius = 50.0f)
+        : speed(speed), detectionRadius(radius), luaState(luaL_newstate()) {
+        if (!luaState) {
+           // throw std::runtime_error("Failed to create Lua state");
+        }
+        luaL_openlibs(luaState); // Load Lua standard libraries
+    }
 
-    //~AIComponent() {
-    //    if (luaState) {
-    //        lua_close(luaState); // Close the Lua state when done
-    //    }
-    //}
+    ~AIComponent() {
+        if (luaState) {
+            lua_close(luaState); // Close the Lua state when done
+        }
+    }
 
-    //void LoadScript(const std::string& scriptPath) {
-    //    if (luaL_dofile(luaState, scriptPath.c_str()) != LUA_OK) {
-    //        std::cout << "Error loading Lua script: " << lua_tostring(luaState, -1) << std::endl;
-    //        lua_pop(luaState, 1); // Remove error message from the stack
-    //    }
-    //}
+    void LoadScript(const std::string& scriptPath) {
+        if (luaL_dofile(luaState, scriptPath.c_str()) != LUA_OK) {
+            std::cout << "Error loading Lua script: " << lua_tostring(luaState, -1) << std::endl;
+            std::cout << "hello";
+            lua_pop(luaState, 1); // Remove error message from the stack
+        }
+        else {
+            std::cout << "SUCCESS" << std::endl;
+        }
 
-    //void UpdateAI() {
-    //    lua_getglobal(luaState, "AI_Behavior");
-    //    if (!lua_isfunction(luaState, -1)) {
-    //        std::cout << "AI_Behavior function not found in Lua script!" << std::endl;
-    //        lua_pop(luaState, 1);
-    //        return;
-    //    }
 
-    //    lua_pushnumber(luaState, speed);
-    //    lua_pushnumber(luaState, detectionRadius);
+    }
 
-    //    if (lua_pcall(luaState, 2, 1, 0) != LUA_OK) { // Expect 1 return value
-    //        std::cout << "Error executing AI_Behavior: " << lua_tostring(luaState, -1) << std::endl;
-    //        lua_pop(luaState, 1);
-    //        return;
-    //    }
+    void UpdateAI() {
+        lua_getglobal(luaState, "AI_Behavior");
+       
+        if (!lua_isfunction(luaState, -1)) {
+            std::cout << "AI_Behavior function not found in Lua script!" << std::endl;
+            lua_pop(luaState, 1);
+            return;
+        }
+        
+        lua_pushnumber(luaState, speed);
+        lua_pushnumber(luaState, detectionRadius);
 
-    //    // Retrieve the return value
-    //    if (lua_isnumber(luaState, -1)) {
-    //        speed = static_cast<float>(lua_tonumber(luaState, -1));
-    //    }
-    //    lua_pop(luaState, 1); // Clean up the stack
-    //}
+        if (lua_pcall(luaState, 2, 1, 0) != LUA_OK) { // Expect 1 return value
+            std::cout << "Error executing AI_Behavior: " << lua_tostring(luaState, -1) << std::endl;
+            lua_pop(luaState, 1);
+            return;
+        }
+      
+        // Retrieve the return value
+        if (lua_isnumber(luaState, -1)) {
+            speed = static_cast<float>(lua_tonumber(luaState, -1));
+        }
+        lua_pop(luaState, 1); // Clean up the stack
+        ReloadScript("aiBehavoir.lua"); // Reloads the script
+    }
+    void ReloadScript(const std::string& scriptPath) {
+        // Close any existing Lua state before reloading the script
+        lua_close(luaState);
+        luaState = luaL_newstate();
+        luaL_openlibs(luaState);
+
+        // Reload and run the Lua script
+        if (luaL_dofile(luaState, scriptPath.c_str()) != LUA_OK) {
+            std::cerr << "Error running Lua script: " << lua_tostring(luaState, -1) << std::endl;
+            lua_pop(luaState, 1);
+        }
+
+        // Get the AI_Behavior function again
+        lua_getglobal(luaState, "AI_Behavior");
+        if (!lua_isfunction(luaState, -1)) {
+            std::cerr << "Error: AI_Behavior function not found in Lua script!" << std::endl;
+            lua_pop(luaState, 1);
+        }
+    }
 };
-const size_t MAX_PARTICLES = 2500;
+const size_t MAX_PARTICLES = 505500;
 class ParticleComponent : public Component {
 public:
     // Particle data arrays (Structure of Arrays)

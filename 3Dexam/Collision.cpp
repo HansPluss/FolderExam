@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "Grid.h"
 #include "Entity.h"
+#include "QuadTree.h"
 
 Collision::Collision()
 {
@@ -17,36 +18,21 @@ Collision::~Collision()
 
 }
 
-void Collision::UpdateCollision(Grid* grid, float dt)
+void Collision::UpdateCollision(QuadTree* quadTree, std::vector<Entity*>& allEntities, float dt)
 {
-	for (int i = 0; i < grid->m_cells.size(); ++i)
-	{
-		int x = i % grid->m_numXCells;
-		int y = i / grid->m_numXCells; 
+	//std::vector<Entity*> allEntities; // Assume you have a method to populate this
+	quadTree->ClearTree();
 
-		Cell& cell = grid->m_cells[i];
+	// Insert all entities into the quadtree
+	for (Entity* entity : allEntities) {
+		quadTree->Insert(entity);
+	}
 
-		for (int j = 0; j < cell.balls.size(); ++j)
-		{
-			Entity* object = cell.balls[j];
-			CheckCollision(object, cell.balls, j + 1, dt);
-			if (x > 0)
-			{
-				CheckCollision(object, grid->getCell(x - 1, y)->balls, 0, dt);
-				if (y > 0)
-				{
-					CheckCollision(object, grid->getCell(x-1,y-1)->balls, 0, dt);
-				}
-				if (y < grid->m_numYCells - 1)
-				{
-					CheckCollision(object, grid->getCell(x - 1, y + 1)->balls, 0, dt);
-				}
-			}
-			if (y > 0)
-			{
-				CheckCollision(object, grid->getCell(x, y - 1)->balls, 0, dt);
-			}
-		}
+	// Check collisions using the quadtree
+	for (Entity* entity : allEntities) {
+		std::vector<Entity*> potentialColliders;
+		quadTree->Retrieve(potentialColliders, entity); // Get nearby entities
+		CheckCollision(entity, potentialColliders, 0,dt); // Check for collisions
 	}
 }
 
@@ -58,7 +44,9 @@ bool Collision::SphereCollison(Entity& objA, Entity& objB, float DeltaTime)
 	float distance_centers = glm::length(posA - posB);
 	float combinedRadii = objA.GetComponent<RenderComponent>()->size.x + objB.GetComponent<RenderComponent>()->size.x;
 	float offset = 0.1f;
+	std::cout << "collition" << std::endl;
 	if (distance_centers <= (combinedRadii + offset)) {
+		
 		// Calculate the minimum translation distance to resolve the collision
 		float minimuntranslation = (combinedRadii + offset) - distance_centers;
 
@@ -201,11 +189,14 @@ void Collision::ObjectCollisionResponse(Entity& objA, Entity& objB)
 	//objB.SetAngularVelocity(glm::cross(-impulseVector, normal));
 }
 
-void Collision::CheckCollision(Entity* object, std::vector<Entity*>& objectToCheck, int startingIndex, float dt)
+void Collision::CheckCollision(Entity* object, std::vector<Entity*>& potentialColliders, int startingIndex, float dt)
 {
-	for (int i = startingIndex; i < objectToCheck.size(); ++i)
+	
+	for (size_t i = 0; i < potentialColliders.size(); ++i)
 	{
-		SphereCollison(*object, *objectToCheck[i], dt);
+		if (object != potentialColliders[i]) { // Avoid self-collision
+			SphereCollison(*object, *potentialColliders[i], dt);
+		}
 	}
 }
 

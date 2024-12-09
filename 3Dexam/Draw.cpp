@@ -246,7 +246,7 @@ void Draw::DrawTerrain(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 {
     position = pos;
     objSize = size;
-    float waveAmplitude = 10.0f; // Adjust for more extreme or subtle "bumps"
+    float waveAmplitude = 2.0f; // Adjust for more extreme or subtle "bumps"
     float waveFrequency = 1.0f;
     float terrainScale = 1.0f;
     int terrainDepth = 10;
@@ -273,9 +273,9 @@ void Draw::DrawTerrain(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
             vertex.v = v;
 
             // Normal (placeholder for now)
-            vertex.normalx = 0.0f;
+            vertex.normalx = 1.0f;
             vertex.normaly = 1.0f;
-            vertex.normalz = 0.0f;
+            vertex.normalz = 1.0f;
 
             vertices.push_back(vertex);
         }

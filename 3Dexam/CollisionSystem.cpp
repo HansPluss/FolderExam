@@ -1,4 +1,5 @@
 #include "CollisionSystem.h"
+#include "QuadTree.h"
 
 void CollisionSystem::AABBCollision(Entity& entityA, std::vector<Entity> entities)
 {
@@ -124,11 +125,11 @@ void CollisionSystem::BarycentricCoordinates(Entity& ballEntity, Entity& planeEn
                         }
 
                         // Update velocity considering both gravity and friction
-                        velocityComponent->velocity = currentVelocity + gravityAlongSlope + frictionForce;
+                        //velocityComponent->velocity = currentVelocity + gravityAlongSlope;
                     }
                     else {
                         // If velocity is zero, only gravity acts
-                        velocityComponent->velocity += gravityAlongSlope;
+                        //velocityComponent->velocity += gravityAlongSlope;
                     }
                     physicsSystem->ApplyForce(ballEntity, gravityAlongSlope);
                 
@@ -274,6 +275,63 @@ void CollisionSystem::DODBarycentric(PositionStorage& storage, AccelerationStora
 
 }
 
+void CollisionSystem::UpdateCollision(QuadTree* quadTree, std::vector<Entity*>& allEntities, float dt)
+{
+    //std::vector<Entity*> allEntities; // Assume you have a method to populate this
+    quadTree->ClearTree();
+
+    // Insert all entities into the quadtree
+    for (Entity* entity : allEntities) {
+        quadTree->Insert(entity);
+    }
+
+    // Check collisions using the quadtree
+    for (Entity* entity : allEntities) {
+        std::vector<Entity*> potentialColliders;
+        quadTree->Retrieve(potentialColliders, entity); // Get nearby entities
+        CheckCollision(entity, potentialColliders, 0, dt); // Check for collisions
+    }
+}
+
+void CollisionSystem::CheckCollision(Entity* object, std::vector<Entity*>& potentialColliders, int startingIndex, float dt)
+{
+    for (size_t i = 0; i < potentialColliders.size(); ++i)
+    {
+        if (object != potentialColliders[i]) { // Avoid self-collision
+            SphereCollision(*object, *potentialColliders[i], dt);
+        }
+    }
+}
+
+void CollisionSystem::ObjectCollisionResponse(Entity& objA, Entity& objB)
+{
+    float massA = objA.GetComponent<PhysicsComponet>()->mass;
+    //needs to add mass to the object
+    float massB = objB.GetComponent<PhysicsComponet>()->mass;
+    glm::vec3 posA = objA.GetComponent<PositionComponent>()->position;
+    glm::vec3 posB = objB.GetComponent<PositionComponent>()->position;
+    glm::vec3 velocityA = objA.GetComponent<VelocityComponent>()->velocity;
+    glm::vec3 velocityB = objB.GetComponent<VelocityComponent>()->velocity;
+
+    glm::vec3 normal = glm::normalize(posB - posA);					// Calculating the normal vector of the collision
+    glm::vec3 relativeVelocity = velocityA - velocityB;				// Calculating the relative velocity
+    float velocityAlongNormal = glm::dot(relativeVelocity, normal);	// Calculating the velocity component along the normal
+
+    // Calculating the new velocities along the normal direction
+    float restitution = 0.01f; // Coefficient of restitution (1 = perfectly elastic collision)
+    float impulse = (-(1 + restitution) * velocityAlongNormal) / (1 / massA + 1 / massB);
+
+    glm::vec3 impulseVector = impulse * normal;
+
+    // Updating velocities along the normal
+    glm::vec3 newVelocityA = velocityA + (impulseVector / massA);
+    glm::vec3 newVelocityB = velocityB - (impulseVector / massB);
+
+    // Setting new velocities
+    objA.GetComponent<VelocityComponent>()->velocity = newVelocityA;
+    objB.GetComponent<VelocityComponent>()->velocity = newVelocityB;
+}
+
 bool CollisionSystem::InvAABBCollision(Entity& entityA, Entity& entityB, float deltaTime)
 {
     if (entityA.isMarkedForDeletion || entityB.isMarkedForDeletion) return false;
@@ -315,45 +373,32 @@ bool CollisionSystem::InvAABBCollision(Entity& entityA, Entity& entityB, float d
     return true;
 }
 
-bool CollisionSystem::SphereCollision(Entity& entityA, Entity& entityB, float deltaTime)
+bool CollisionSystem::SphereCollision(Entity& objA, Entity& objB, float deltaTime)
 {
-    auto* positionA = entityA.GetComponent<PositionComponent>();
-    auto* velocityA = entityA.GetComponent<VelocityComponent>();
-    auto* velocityB = entityB.GetComponent<VelocityComponent>();
-    auto* positionB = entityB.GetComponent<PositionComponent>();
+    //float VelocityScale = 0.05f;
+    glm::vec3 posA = objA.GetComponent<PositionComponent>()->GetPosition() + objA.GetComponent<VelocityComponent>()->GetVelocity() * deltaTime;
+    glm::vec3 posB = objB.GetComponent<PositionComponent>()->GetPosition() + objB.GetComponent<VelocityComponent>()->GetVelocity() * deltaTime;
+    float distance_centers = glm::length(posA - posB);
+    float combinedRadii = objA.GetComponent<RenderComponent>()->size.x + objB.GetComponent<RenderComponent>()->size.x;
+    float offset = 0.1f;
+    std::cout << "collition" << std::endl;
+    if (distance_centers <= (combinedRadii + offset)) {
 
+        // Calculate the minimum translation distance to resolve the collision
+        float minimuntranslation = (combinedRadii + offset) - distance_centers;
 
-    glm::vec3 sizeA = entityA.GetComponent<RenderComponent>()->size;
-    glm::vec3 sizeB = entityB.GetComponent<RenderComponent>()->size;
+        // Determine the direction vector between the two objects
+        auto dirvec = glm::normalize(posA - posB);
 
-   
-    if (!velocityA || !velocityB) {
-        return false;
-    }
+        // Apply the translation to separate objA from objB
+        objA.GetComponent<PositionComponent>()->position += dirvec * minimuntranslation;
 
-    // Predicting positions using velocities
-    glm::vec3 futurePosA = positionA->position + velocityA->velocity * deltaTime;
-    glm::vec3 futurePosB = positionB->position + velocityB->velocity * deltaTime;
-    
-    // Calculating the distance between the centers of both objects
-    float distanceCenters = glm::length(futurePosA - futurePosB);
-
-    // Checking if the distance is less than the sum of the radii
-    if (distanceCenters <= (sizeA.x + sizeB.x)) {
-
-        // Calculating the minimum translation vector to resolve penetration
-        float minimumTranslation = sizeA.x + sizeB.x - distanceCenters;
-        glm::vec3 directionVec = glm::normalize(positionA->position - positionB->position);
-
-        // Moving objA out of collision
-        positionA->position += directionVec * minimumTranslation;
-
-        // Handling the response
-        //ObjectCollisionResponse(objA, objB);
+        // Handle collision response
+        ObjectCollisionResponse(objA, objB);
 
         return true;
     }
 
-    // No collision
+    // No collision detected
     return false;
 }

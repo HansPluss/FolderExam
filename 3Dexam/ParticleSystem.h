@@ -8,7 +8,7 @@ class ParticleSystem {
 public:
     // Emit a new particle
     void emit(ParticleComponent& particles, const glm::vec3& centerPosition,
-        float minSpeed = 3.0f, float maxSpeed = 8.0f,
+        float minSpeed = 5.0f, float maxSpeed = 10.0f,
         float spreadX = 80.0f, float spreadZ = 80.0f) {
         if (particles.count < MAX_PARTICLES) {
             size_t index = particles.count; // Use the next available slot
