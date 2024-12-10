@@ -381,7 +381,7 @@ bool CollisionSystem::SphereCollision(Entity& objA, Entity& objB, float deltaTim
     float distance_centers = glm::length(posA - posB);
     float combinedRadii = objA.GetComponent<RenderComponent>()->size.x + objB.GetComponent<RenderComponent>()->size.x;
     float offset = 0.1f;
-    std::cout << "collition" << std::endl;
+   // std::cout << "collition" << std::endl;
     if (distance_centers <= (combinedRadii + offset)) {
 
         // Calculate the minimum translation distance to resolve the collision

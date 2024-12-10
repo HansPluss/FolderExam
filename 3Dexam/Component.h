@@ -204,7 +204,7 @@ public:
         }
     }
 };
-const size_t MAX_PARTICLES = 505500;
+const size_t MAX_PARTICLES = 5000;
 class ParticleComponent : public Component {
 public:
     // Particle data arrays (Structure of Arrays)

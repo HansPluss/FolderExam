@@ -2,6 +2,9 @@
 #include "Entity.h"
 #include <memory>
 #include "Component.h"
+#include "Enemy.h"
+
+
 class EntityManager {
 public:
     EntityManager() = default;
@@ -69,6 +72,9 @@ public:
     std::vector<std::unique_ptr<Entity>>& GetEntities() {
         return entities;
     }
+
+  
+    
 
 private:
     std::vector<std::unique_ptr<Entity>> entities;

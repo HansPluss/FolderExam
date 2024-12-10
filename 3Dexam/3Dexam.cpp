@@ -23,6 +23,7 @@
 
 
 
+
 // Can be removed if unused 
 #include "memory" // for smart pointers
 
@@ -55,8 +56,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);  // D
 void processInput(GLFWwindow* window);
 bool del = false;
 bool spawnObj = false;
+bool spawnEnemy = false;
 bool isEKeyPressed = false;
 bool isQKeyPressed = false;
+bool isRKeyPressed = false;
 bool toggle = false;
 // Window dimensions
 const unsigned int SCR_WIDTH = 1800;
@@ -78,7 +81,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     }
     inputSystem->SetMouseInput(scrollY);
 }
-AIComponent ai(3.5f, 75.0f);
+
 int main()
 {
     // glfw: initialize and configure
@@ -111,7 +114,7 @@ int main()
     
     
     //    // Load the Lua script
-    ai.LoadScript("aiBehavoir.lua");
+  
 
    
     
@@ -141,19 +144,19 @@ int main()
     ballObject.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
     ballObject.AddComponent<VelocityComponent>();
     ballObject.AddComponent<AccelerationComponent>();
-    ballObject.AddComponent<PhysicsComponet>();
+    ballObject.AddComponent<PhysicsComponet>(20);
     Entity ballObject_2;
     ballObject_2.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
     ballObject_2.AddComponent<RenderComponent>(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
     ballObject_2.AddComponent<VelocityComponent>();
     ballObject_2.AddComponent<AccelerationComponent>();
-    ballObject_2.AddComponent<PhysicsComponet>(1);
+    ballObject_2.AddComponent<PhysicsComponet>(100);
 
    
 
-    Entity pointCloud;
-    pointCloud.AddComponent<PositionComponent>(0.0f,0.0f,0.0f);
-    pointCloud.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "terrain");
+    Entity surface;
+    surface.AddComponent<PositionComponent>(0.0f,0.0f,0.0f);
+    surface.AddComponent<RenderComponent>(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10.0f, 1.0f, 10.0f), "terrain");
 
     Entity cube;
     cube.AddComponent<PositionComponent>(0, 0, 0);
@@ -168,7 +171,7 @@ int main()
     std::shared_ptr <PhysicsSystem> physicsSystem = std::make_shared<PhysicsSystem>();
     std::shared_ptr <CollisionSystem> collisionSystem = std::make_shared<CollisionSystem>();
     std::shared_ptr <ParticleSystem> particleSystem = std::make_shared<ParticleSystem>();
-    renderSystem->initalize(pointCloud);
+    renderSystem->initalize(surface);
     
 
    
@@ -176,16 +179,16 @@ int main()
     int gridSizeX = 4;
     int gridSizeZ = 4;
     glm::vec4 treeBounds(0, 0, gridSizeX, gridSizeZ);
-    std::unique_ptr<Grid> m_grid = std::make_unique<Grid>(gridSizeX, gridSizeZ, cellSize);
     QuadTree q_tree(0, treeBounds);
     q_tree.Insert(&ballObject);
     q_tree.Insert(&ballObject_2);
+    q_tree.Insert(&player);
    
-    //m_grid->AddBaLL(&ballObject);
-   // m_grid->AddBaLL(&ballObject_2);
+  
     // Intializing entity vector
     std::vector<Entity*> myEntities;
     //myEntities.push_back(&pointCloud);
+    myEntities.push_back(&player);
     myEntities.push_back(&ballObject);
     myEntities.push_back(&ballObject_2);
   
@@ -213,7 +216,7 @@ int main()
     }
 
     // Camera FOV & starting position
-    std::shared_ptr<Camera> camera = std::make_shared<Camera>(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 0.0f, 0.0f));
+    std::shared_ptr<Camera> camera = std::make_shared<Camera>(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 20.0f, 20.0f));
     // Initalizing textures
     Texture wood("Resources/Textures/wood.png", shaderProgram);
     Texture green("Resources/Textures/green.jpg", shaderProgram);
@@ -271,13 +274,14 @@ int main()
         // Setup camera settings and inputs
         camera->Inputs(window);
         glm::mat4 viewproj = camera->Matrix(45.0f, 0.1f, 1000.0f, shaderProgram, "camMatrix");
-       // camera->Position = glm::vec3(player.GetComponent<PositionComponent>()->position.x, camera->Position.y, player.GetComponent<PositionComponent>()->position.z + 25);
-        //pointcloud 
-        ai.UpdateAI();
+      
+       
         glBindTexture(GL_TEXTURE_2D, green.texture);
-        renderSystem->RenderPoints(pointCloud, shaderProgram, viewproj);
+        renderSystem->RenderPoints(surface, shaderProgram, viewproj);
        
         collisionSystem->UpdateCollision(&q_tree, myEntities,dt);
+
+
         glBindTexture(GL_TEXTURE_2D, queball.texture);
         renderSystem->RenderParticles(p_system, shaderProgram, viewproj);
        
@@ -298,12 +302,19 @@ int main()
             else if (myEntities[i]->GetComponent<RenderComponent>()->shape == "cube") {
                 glBindTexture(GL_TEXTURE_2D, textures[4].texture);
             }
-           
+            if (Player* player = dynamic_cast<Player*>(myEntities[i])) {
+                inputSystem->processInput(*player, window);
+            }
+            if (Enemy* enemy = dynamic_cast<Enemy*>(myEntities[i])) {
+                //very basic AI for the enemy to follow the player
+                enemy->FollowEntity(player, physicsSystem);
+            }
+
 
             //Gives movement/physics to entities
             physicsSystem->Update(*myEntities[i], dt);
             //Calculates the collisions
-            collisionSystem->BarycentricCoordinates(*myEntities[i],pointCloud, physicsSystem);
+            collisionSystem->BarycentricCoordinates(*myEntities[i], surface, physicsSystem);
             
             //Renders the entities
             renderSystem->RenderPoints(*myEntities[i], shaderProgram, viewproj);
@@ -311,6 +322,14 @@ int main()
             
             
          
+        }
+        if (spawnEnemy) {
+            //spawn enemy instance
+            Enemy& enemy = manager->CreateEntityDerivedFromClass<Enemy>();
+            renderSystem->initalize(enemy);
+            q_tree.Insert(&enemy);
+            myEntities.push_back(&enemy);
+            spawnEnemy = false;
         }
        
 
@@ -361,6 +380,16 @@ void processInput(GLFWwindow* window)
         
 
         isQKeyPressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        //Use to spawn objects into scene
+        if (!isRKeyPressed) {
+            spawnEnemy = true;
+        }
+        isRKeyPressed = true;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE) {
+        isRKeyPressed = false;
     }
     else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {
         isQKeyPressed = false;

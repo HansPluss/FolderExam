@@ -62,10 +62,5 @@ public:
         }
     }
 
-    // Render all particles (example, OpenGL or similar rendering system required)
-    void render(ParticleComponent& particles) {
-        // For demonstration, this is a stub.
-        // Use your graphics API (e.g., OpenGL, DirectX, Vulkan) to render the particles.
-       
-    }
+    
 };

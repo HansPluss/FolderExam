@@ -156,6 +156,7 @@
     <ClCompile Include="Dependency\includes\imgui\imgui_tables.cpp" />
     <ClCompile Include="Dependency\includes\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Draw.cpp" />
+    <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Grid.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="Dependency\includes\imgui\imstb_textedit.h" />
     <ClInclude Include="Dependency\includes\imgui\imstb_truetype.h" />
     <ClInclude Include="Draw.h" />
+    <ClInclude Include="Enemy.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="Grid.h" />
@@ -208,11 +210,13 @@
     <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="aiBehavoir.lua" />
     <None Include="default.frag" />
     <None Include="default.vert" />
     <None Include="imgui.ini" />
     <None Include="light.frag" />
     <None Include="light.vert" />
+    <None Include="lua54.dll" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\Textures\brick.png" />
