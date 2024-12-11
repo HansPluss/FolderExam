@@ -155,8 +155,6 @@ public:
         else {
             std::cout << "SUCCESS" << std::endl;
         }
-
-
     }
 
     void UpdateAI() {

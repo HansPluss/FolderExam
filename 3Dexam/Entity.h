@@ -30,16 +30,7 @@ public:
         isMarkedForDeletion = false;
     }
     //used for updating collisions
-    void updateGrid(Grid* grid)
-    {
-        Cell* newCell = grid->getCell(this->GetComponent<PositionComponent>()->position);
-        if (newCell != this->ownerCell)
-        {
-            grid->RemoveBallFromCell(this, this->ownerCell);
-            grid->AddBaLL(this, newCell);
-            this->ownerCell = newCell; // Updating the ownerCell after moving
-        }
-    }
+   
     //Add components to entity
     template<typename T, typename... Args>
     void AddComponent(Args&&... args) {

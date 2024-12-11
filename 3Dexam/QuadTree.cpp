@@ -50,7 +50,6 @@ void QuadTree::Insert(Entity* obj)
 	}
 
 	balls.push_back(obj);
-
 	if (balls.size() > maxDepth && depth < maxDepth) {
 		if (nodes[0] == nullptr) {
 			SplitTree();
@@ -69,7 +68,6 @@ void QuadTree::Insert(Entity* obj)
 			}
 		}
 	}
-
 
 }
 

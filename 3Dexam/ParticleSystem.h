@@ -11,7 +11,7 @@ public:
         float minSpeed = 5.0f, float maxSpeed = 10.0f,
         float spreadX = 80.0f, float spreadZ = 80.0f) {
         if (particles.count < MAX_PARTICLES) {
-            size_t index = particles.count; // Use the next available slot
+            size_t index = particles.count;
 
             // Random position spread on X and Z axes around the center
             float offsetX = (static_cast<float>(rand()) / RAND_MAX - 0.5f) * 2.0f * spreadX;
@@ -29,7 +29,7 @@ public:
             particles.velocities[index] = velocity;
             particles.colors[index] = glm::vec4(1.0, 1.0, 1.0, 0.0);
            
-            particles.lifetimes[index] = 4.0f; // Lifetime of 2 seconds
+            particles.lifetimes[index] = 4.0f;
 
             ++particles.count;
         }
